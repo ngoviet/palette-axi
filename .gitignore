@@ -1,0 +1,26 @@
+
+# --- nền D:\code (System_info/templates/dcode/gitignore-base) ---
+.env
+.env.*
+!.env.example
+logs/
+tmp/
+*.log
+*.log.err
+*.bak*
+*.old
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+.repowise/
+.codegraph/
+.lavish/
+Thumbs.db
+desktop.ini
+
+# --- riêng palette-axi ---
+dist/
+build/
+coverage/
+*.local

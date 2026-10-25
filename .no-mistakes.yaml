@@ -1,0 +1,14 @@
+# Cấu hình no-mistakes cho repo này.
+#
+# ⚠️ Các field ĐIỀU KHIỂN (commands, agent, no_ci, gates…) chỉ được đọc từ
+# **default branch** — nên file này phải nằm trên `main`.
+
+# CI chính là Woodpecker tự host (.woodpecker/ci.yaml), chỉ chạy khi repo đã Enable trong
+# https://ci.bepmamnon.com. Chưa Enable thì PR không có check nào ⇒ khai no_ci để bước CI
+# không chờ "0 check" tới hết hạn. Khi Woodpecker đã bật, check thật vẫn được tính.
+no_ci: true
+
+# Lệnh nền chạy TRƯỚC agent test: cài sạch rồi typecheck + eslint + vitest (test chạy bin đã
+# build, không gọi mạng) + kiểm skill/SKILL.md khớp registry.
+commands:
+  test: "npm ci --no-audit --no-fund && npm run check && npm run skill:check"
