@@ -23,7 +23,11 @@ const BARE_HEX = /^[0-9a-f]{3}$|^[0-9a-f]{6}$|^[0-9a-f]{8}$/i;
 export function tryParse(input: string): Color | undefined {
   const s = input.trim();
   try {
-    return new Color(BARE_HEX.test(s) ? `#${s}` : s);
+    const c = new Color(BARE_HEX.test(s) ? `#${s}` : s);
+    if (!c.coords || c.coords.some((x) => typeof x !== "number" || Number.isNaN(x))) {
+      return undefined;
+    }
+    return c;
   } catch {
     return undefined;
   }

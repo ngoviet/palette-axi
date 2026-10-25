@@ -61,6 +61,13 @@ describe("contract", () => {
     expect(out).toContain("help[");
   });
 
+  it("no arguments succeeds in directories with JS/TS code without crashing on non-numeric color calls", () => {
+    const { out, code } = run([], root);
+    expect(code).toBe(0);
+    expect(out).toContain("bin: ");
+    expect(out).toContain("rules: ");
+  });
+
   it("an empty directory says so", () => {
     const dir = mkdtempSync(join(tmpdir(), "palette-empty-"));
     expect(field(run([], dir).out, "here")).toMatch(/^0 colors found in 0 files/);
