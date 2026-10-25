@@ -1,0 +1,42 @@
+/*
+ * Bảng màu lan-topo-card — chép từ D:\code\lan-topo-card\dist\lan-topo-card.js (bản 0.6.1, chỉ đọc).
+ * 23 màu theme: 5 trung tính (nền gradient, chữ, chữ phụ), 2 xám trạng thái, 16 màu nhấn.
+ * Bỏ các màu dùng một lần cho chữ trên chip (#1a1205, #1a0509, #06101f, #713f12, #fde047…).
+ * Số đo đối chiếu (OKLab Ottosson + APCA-W3 0.0.98G, 26/10/2026) nằm trong test/fixture.test.ts.
+ */
+:root {
+  /* dòng 1182–1184: --ltc-bg radial-gradient(… #142443 0%, #0a1122 55%, #060a14 100%) */
+  --ltc-bg-glow: #142443;
+  --ltc-bg: #0a1122;
+  --ltc-bg-edge: #060a14;
+  --ltc-fg: #e6edf7;
+  --ltc-dim: #8ea3c2;
+  --ltc-up: #e879f9; /* dòng 1187 */
+
+  /* dòng 58–65: SPEED_TIERS, NO_LINK_COLOR, UNKNOWN_SPEED_COLOR */
+  --speed-10g: #3b82f6;
+  --speed-2g5: #14b8a6;
+  --speed-1g: #22c55e;
+  --speed-100m: #f59e0b;
+  --speed-10m: #9ca3af;
+  --no-link: #ef4444;
+  --unknown-speed: #22d3ee;
+
+  /* dòng 130–136: loại thiết bị */
+  --type-internet: #a78bfa;
+  --type-modem: #fb923c;
+  --type-switch: #34d399;
+  --type-ap: #60a5fa;
+  --type-server: #f472b6;
+  --type-device: #94a3b8;
+
+  /* dòng 448: QUALITY_COLORS */
+  --quality-good: #22c55e;
+  --quality-poor: #ef4444;
+
+  /* CSS của thẻ: cổng nóng, số liệu, dải 5 GHz, chip cảnh báo */
+  --hot-port: #fbbf24; /* dòng 1782 */
+  --metric: #7dd3fc; /* dòng 1986 */
+  --band-24: #38bdf8; /* dòng 1969 */
+  --alert-chip: #fb7185; /* dòng 1929 */
+}
