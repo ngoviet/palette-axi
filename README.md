@@ -26,7 +26,7 @@ Hex phải bọc nháy (`"#3b82f6"`) hoặc bỏ `#` (`3b82f6`): shell coi `#…
 | 3 | Nền tối không đen tuyền: L 0.13–0.20; mặt nổi sáng hơn 0.03–0.08; gradient từ một góc | `3-bg` |
 | 4 | Màu nhấn cùng một dải sáng (nền tối L 0.70–0.80) hoặc cùng Lc, chroma cao nhất trong gamut ≤ 0.20 | `4-band` |
 | 5 | Thang chroma giảm dần về hai đầu | `5-scale` |
-| 6 | Mỗi bậc một vai trò; mỗi sắc một nghĩa (ok xanh lá, warn vàng/cam, bad đỏ, info xanh dương) | `6-meaning` |
+| 6 | Mỗi bậc một vai trò; mỗi sắc một nghĩa (success xanh lá, warn vàng/cam, error đỏ, info xanh dương) | `6-meaning` |
 | 7 | Kiểm bằng máy: APCA Lc 90/75/60/45/30/15, kèm WCAG 2 (4.5:1); kẹp sRGB | `7-contrast`, `7-gamut` |
 
 Nguồn: Evil Martians (OKLCH), Ottosson (Oklab), Radix Colors, Tailwind v4, Material dark theme, APCA,
