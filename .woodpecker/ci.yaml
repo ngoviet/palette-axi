@@ -1,0 +1,28 @@
+# CI trên Woodpecker tự host (PC4, https://ci.bepmamnon.com) — repo riêng tư nên không dùng
+# GitHub Actions (hết phút cho repo private từ 22/10/2026).
+# CHỈ CHẠY khi repo đã được Enable trong https://ci.bepmamnon.com (Add repository).
+#
+# Mỗi bước là một container mới dùng chung thư mục đã clone. Test không gọi mạng; bài đo trên
+# bundle lan-topo-card thật tự bỏ qua vì CI không có D:\code\lan-topo-card.
+
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+  - event: manual
+
+steps:
+  - name: install
+    image: node:24-bookworm-slim
+    commands:
+      - npm ci --no-audit --no-fund
+
+  - name: check
+    image: node:24-bookworm-slim
+    commands:
+      - npm run check
+
+  - name: skill
+    image: node:24-bookworm-slim
+    commands:
+      - npm run skill:check
