@@ -119,6 +119,21 @@ describe("generate", () => {
     expect(run(["generate", "--preset", "cockpit", "--mode", "light", "--format", "css"]).out).not.toContain("prefers-color-scheme");
   });
 
+  it("preset cockpit omits CSS variables whose tokens are filtered by roles", () => {
+    for (const mode of ["light", "dark", "both"]) {
+      const { out, code } = run(["generate", "--preset", "cockpit", "--mode", mode, "--roles", "warn", "--format", "css"]);
+      expect(code).toBe(0);
+      expect(out).not.toMatch(/--(?:bg-gradient|gradient-primary):/);
+      expect(out).toContain("--card: color-mix(");
+      expect(out).toContain("--warn: oklch(");
+      expect(out).not.toMatch(/var\(--(?:primary|accent)\)/);
+    }
+    const { out, code } = run(["generate", "--preset", "cockpit", "--roles", "primary,accent", "--format", "css"]);
+    expect(code).toBe(0);
+    expect(out.match(/--bg-gradient:/g)).toHaveLength(3);
+    expect(out.match(/--gradient-primary:/g)).toHaveLength(3);
+  });
+
   it("rejects contradictory flags with exit 2", () => {
     expect(run(["generate"]).code).toBe(2);
     expect(run(["generate", "--seed", "1", "--preset", "neon-dark"]).code).toBe(2);

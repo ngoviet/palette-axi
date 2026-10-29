@@ -219,7 +219,10 @@ function cssVars(t: Theme, indent: string, prefix = ""): string {
 /** Biến thêm: của preset nếu có, không thì --bg-gradient mặc định (chỉ ở khối đầu, nó tham chiếu var()). */
 function extraVars(t: Theme, indent: string, first: boolean): string {
   const extra = t.css ?? (first ? { "bg-gradient": GRADIENT } : {});
-  return Object.entries(extra).map(([k, v]) => `\n${indent}--${k}: ${v};`).join("");
+  const tokens = new Set([...t.neutrals, ...t.accents].map((x) => x.token));
+  return Object.entries(extra)
+    .filter(([, v]) => [...v.matchAll(/var\(\s*--([\w-]+)/g)].every((m) => tokens.has(m[1]!)))
+    .map(([k, v]) => `\n${indent}--${k}: ${v};`).join("");
 }
 
 function renderCss(themes: Theme[], header: string): string {

@@ -85,7 +85,7 @@ export const PRESETS: Record<string, Preset> = {
       "Two surfaces: solid for dialogs, dropdowns and menus; translucent cards (75% light, 85% dark) let the gradient through",
       "Borders, hover and shadows are the text color at low alpha (dark: white/black), not extra greys",
       "Dark mode lifts the brand one step brighter; status colors keep the same hue in every theme",
-      "Theme packs (Nord, Tokyo Night, Catppuccin, Gruvbox, Everforest, OLED) override primary, hover and accent only, plus bg and text in dark mode",
+      "Theme packs Nord, Tokyo Night, Catppuccin, Gruvbox and Everforest override primary, hover and accent, plus bg and text in dark mode; OLED also overrides bg, text, card, hover and border in both modes",
     ],
     modes: {
       light: {
