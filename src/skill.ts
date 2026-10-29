@@ -44,6 +44,8 @@ the \`#\` (\`3b82f6\`): an unquoted \`#…\` is a shell comment and silently dis
 3. **Build** a new theme: \`${RUN} generate --seed <hue|"#hex"> --mode dark|light|both --format css\`;
    the TOON view ends with \`check:\` (the same rules re-run on the result).
    \`--preset neon-dark\` is the lan-topo-card neon look with its weak colors fixed.
+   \`--preset cockpit\` is the cockpit-tools light + dark theme (warm paper bg, slate text, blue → teal);
+   it also returns \`principles[]\`, and \`--format css\` adds gradient, card and alpha-border variables.
 4. **Ramp** one hue: \`${RUN} scale "<color>" [--steps 12 --mode dark]\`.
 5. Re-run \`analyze\` on the real UI after wiring tokens; add \`--strict\` in CI.
 

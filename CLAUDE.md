@@ -13,7 +13,8 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 - `src/rules.ts` — 7 nguyên tắc thành phép chấm; ngưỡng ở hằng `T`. Dùng chung cho analyze và generate.
   Quy tắc `8-pairs` (08/11/2026, học từ Fluent Blue): ghép chữ–nền theo tên token trong cùng khối `{}`
   (`extract.ts` ghi `tokens[]` kèm scope), ngưỡng `PAIR` = Lc 60 + 4.5:1. `generate` không có token ⇒ n/a.
-- `src/presets.ts` — preset (neon-dark = lan-topo-card, 3 màu yếu sửa khi xuất).
+- `src/presets.ts` — preset theo chế độ (`modes.light/dark`): neon-dark = lan-topo-card (tối, 3 màu sửa);
+  cockpit = cockpit-tools (sáng + tối, 12 màu sửa, `principles[]`, biến CSS thêm). Kiểu sửa: band, text, tint, bg.
 - `src/commands/*` — mỗi lệnh một file; trả object (SDK render TOON) hoặc chuỗi (`--format css|tailwind|json`).
 - `test/` — vitest chạy **bin đã build** (`dist/`, global-setup build trước) qua `spawnSync`, không gọi mạng.
 
