@@ -42,7 +42,9 @@ Preset `cockpit` lấy từ `src/styles/base.css` của [cockpit-tools](https://
 (đo 29/10/2026), có cả sáng lẫn tối (mặc định xuất cả hai). Đầu ra TOON có `principles[]` (7 nguyên tắc
 rút từ theme gốc: nền giấy ấm + chữ slate lạnh, cặp blue → teal, bề mặt đặc/trong suốt, viền bằng alpha
 của màu chữ…); `--format css` ghi thêm nguyên tắc ở đầu tệp và các biến `--bg-gradient`,
-`--gradient-primary`, `--card`, `--border`, `--hover`, `--shadow-md`. Màu đã sửa (liệt kê trong `fixed[]`):
+`--gradient-primary`, `--card`, `--border`, `--border-light`, `--hover`, `--shadow-md`. Khi dùng
+`--roles`, các biến phụ tham chiếu token bị lọc cũng bị bỏ khỏi CSS. Có thể chọn `--mode light` hoặc
+`--mode dark`; preset không hỗ trợ chế độ được yêu cầu sẽ báo lỗi. Màu đã sửa (liệt kê trong `fixed[]`):
 
 | Chế độ | Token | Gốc → mới | Lý do |
 |---|---|---|---|
