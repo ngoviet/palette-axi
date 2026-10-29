@@ -13,7 +13,7 @@ export const GENERATE_HELP = `usage: palette-axi generate --seed <hue|color> [--
 description: Build a theme by the 7 rules: neutrals tinted with the seed hue, a not-black background with a corner glow, accents on one lightness band at equal APCA contrast with max in-gamut chroma, meaning-coded status colors. The result is re-scored with the analyze rules
 flags[6]:
   --seed <hue|color>: hue angle (262) or a color whose hue is the primary ("#22d3ee")
-  --mode dark|light|both: default dark; both = light :root + dark under prefers-color-scheme / [data-theme=dark]
+  --mode dark|light|both: default dark with --seed; with --preset, default is every available mode (cockpit: both). both = light :root + dark under prefers-color-scheme / [data-theme=dark]
   --roles a,b: accents to build (default primary,ok,warn,bad,info). Named hues: red orange amber yellow lime green teal cyan sky blue indigo violet purple fuchsia pink; custom: brand=310
   --lc <n>: target |APCA Lc| of accents on bg (default 60), kept inside the band
   --preset neon-dark|cockpit: a real theme with its weak colors fixed and listed in fixed[]. neon-dark = lan-topo-card neon (dark only; blue/red into the band, secondary text to Lc 60). cockpit = cockpit-tools light + dark (default both; warm paper bg tinted, status colors and muted text readable, dark hover brighter) with its principles[] and gradient/alpha vars in --format css
