@@ -17,8 +17,20 @@ export interface Found {
   count: number;
 }
 
+/** Một lần gán màu cho một tên token, kèm khối `{…}` chứa nó (để ghép cặp theo tên không lẫn theme sáng/tối). */
+export interface TokenDef {
+  /** Tên gốc như trong file: "--on-primary", "primaryForeground". */
+  name: string;
+  hex: string;
+  /** "file#offset của `{` gần nhất bao ngoài" — "file#0" khi ở ngoài mọi khối. */
+  scope: string;
+  where: string;
+}
+
 export interface Extracted {
   colors: Found[];
+  /** Mọi lần gán màu có tên (không gộp trùng): nguồn của quy tắc 8-pairs. */
+  tokens: TokenDef[];
   /** Màu có alpha < 1 (lớp phủ) — đếm riêng, không chấm. */
   translucent: number;
   files: number;
@@ -38,7 +50,7 @@ const NAME_BEFORE = /(?<![\w$.#-])(--[\w-]+|[A-Za-z_$][\w$-]*)["']?\s*[:=]\s*["'
 // Tên thuộc tính CSS chung chung — không mang nghĩa, không ghi làm tên.
 const GENERIC = new Set(["color", "background", "background-color", "border", "border-color", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color", "fill", "stroke", "outline", "outline-color", "box-shadow", "text-shadow", "filter", "accent-color", "caret-color", "--c", "c", "value", "default"]);
 
-export function extractFromText(source: string, file: string, into: Map<string, Found>, stats: { translucent: number }): void {
+export function extractFromText(source: string, file: string, into: Map<string, Found>, stats: { translucent: number }, tokens?: TokenDef[]): void {
   // Màu nằm trong chú thích /* … */ là tài liệu, không phải màu đang dùng. Thay bằng khoảng
   // trắng (giữ xuống dòng) để số dòng không lệch.
   const text = source.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
@@ -58,7 +70,20 @@ export function extractFromText(source: string, file: string, into: Map<string, 
   for (const m of text.matchAll(HEX)) matches.push({ raw: m[0], index: m.index });
   for (const m of text.matchAll(FUNC)) matches.push({ raw: m[0], index: m.index });
   matches.sort((a, b) => a.index - b.index);
+  // Khối `{…}` bao ngoài từng màu: đi một lượt qua text song song với matches (đã xếp theo vị trí).
+  // `:root {}` và `[data-theme=dark] {}` thành hai scope ⇒ `--on-primary` sáng không ghép với `--primary` tối.
+  const stack: number[] = [];
+  let pos = 0;
+  const scopeAt = (index: number): string => {
+    for (; pos < index; pos++) {
+      const ch = text.charCodeAt(pos);
+      if (ch === 123) stack.push(pos);
+      else if (ch === 125) stack.pop();
+    }
+    return `${file}#${stack.length ? stack[stack.length - 1]! : 0}`;
+  };
   for (const { raw, index } of matches) {
+    const scope = scopeAt(index);
     if (raw.includes("${") || raw.includes("var(")) continue;
     const color = tryParse(raw);
     if (!color) continue;
@@ -72,7 +97,9 @@ export function extractFromText(source: string, file: string, into: Map<string, 
     const m = NAME_BEFORE.exec(prefix);
     // `cond ? x : "#94a3b8"` — x là nhánh ternary, không phải tên.
     const name = m && !/\?\s*$/.test(prefix.slice(0, m.index)) ? m[1] : undefined;
-    addFound(into, s, raw, name, `${file}:${line + 1}`);
+    const where = `${file}:${line + 1}`;
+    addFound(into, s, raw, name, where);
+    if (tokens && name && !GENERIC.has(name)) tokens.push({ name, hex: s.hex, scope, where });
   }
 }
 
@@ -119,6 +146,7 @@ export function extract(inputs: string[], opts: { maxFiles?: number; cwd?: strin
   const cwd = opts.cwd ?? process.cwd();
   const map = new Map<string, Found>();
   const stats = { translucent: 0 };
+  const tokens: TokenDef[] = [];
   let files = 0;
   for (const input of inputs) {
     let st;
@@ -144,8 +172,8 @@ export function extract(inputs: string[], opts: { maxFiles?: number; cwd?: strin
       files++;
       // Đường dẫn như người dùng gõ (`src/x.css`); home quét cwd tuyệt đối ⇒ rút về tương đối.
       const shown = opts.cwd ? relative(cwd, f) || f : f;
-      extractFromText(readFileSync(f, "utf8"), shown.replaceAll("\\", "/"), map, stats);
+      extractFromText(readFileSync(f, "utf8"), shown.replaceAll("\\", "/"), map, stats, tokens);
     }
   }
-  return { colors: [...map.values()], translucent: stats.translucent, files, inputs };
+  return { colors: [...map.values()], tokens, translucent: stats.translucent, files, inputs };
 }

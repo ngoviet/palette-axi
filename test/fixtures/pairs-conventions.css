@@ -1,0 +1,27 @@
+/* Quy ước đặt tên cặp chữ–nền cho quy tắc 8-pairs (fixture tự viết). */
+
+/* shadcn/ui: X-foreground trên X, foreground trên background. */
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --primary-text: #2563eb;
+}
+
+/* Khối tối chỉ đè chữ: --destructive lấy định nghĩa duy nhất ở :root, --primary có 2 định nghĩa ⇒ lấy cùng khối. */
+.dark {
+  --primary: #fafafa;
+  --primary-foreground: #171717;
+  --destructive-foreground: #fafafa;
+}
+
+/* Material: on-X-container trên X-container; tiền tố chung giữ nguyên. */
+.md {
+  --md-primary-container: #d3e3fd;
+  --md-on-primary-container: #041e49;
+  --md-tertiary: #ffd600;
+  --md-on-tertiary: #ffffff;
+}

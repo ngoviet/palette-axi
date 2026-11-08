@@ -1,5 +1,5 @@
 import { apca, Color, hueDist, meanHue, round, swatch, wcag, type Swatch } from "./color.js";
-import type { Found } from "./extract.js";
+import type { Found, TokenDef } from "./extract.js";
 
 // 7 nguyên tắc (kb: nguyen-tac-tao-bang-mau-dep-va-skill-palette-theo-axi) thành phép chấm.
 // Dùng chung cho `analyze` (chấm màu gom được) và `generate` (tự chấm kết quả của mình).
@@ -37,6 +37,8 @@ export interface Analysis {
   issues: Issue[];
   rules: RuleResult[];
   summary: Record<string, string>;
+  /** Cặp chữ–nền ghép theo tên token (quy tắc 8). */
+  pairs: Pair[];
 }
 
 /** Ngưỡng — đổi ở đây là đổi cả analyze lẫn generate. */
@@ -54,7 +56,85 @@ export const T = {
   visibleLc: 15, // dưới mức này coi như vô hình
 } as const;
 
-export const RULES = ["2-tint", "3-bg", "4-band", "5-scale", "6-meaning", "7-contrast", "7-gamut"] as const;
+export const RULES = ["2-tint", "3-bg", "4-band", "5-scale", "6-meaning", "7-contrast", "7-gamut", "8-pairs"] as const;
+
+/** Ngưỡng 8-pairs: chữ đặt trên mặt màu = "content text" của lệnh contrast (APCA và WCAG cùng đạt). */
+export const PAIR = { lc: 60, wcag: 4.5 } as const;
+const STATES = ["", "-hover", "-pressed", "-active"];
+const FILLS = ["-subtle", "-bg", "-soft", "-container", "-background"];
+
+export interface Pair {
+  fg: TokenDef;
+  bg: TokenDef;
+  lc: number;
+  wcag: number;
+}
+
+/**
+ * Tên token (đã qua `words`) ⇒ các tên nền mà nó nằm lên, theo quy ước phổ biến:
+ * `on-X` / `X-foreground` trên `X` và trạng thái `X-hover|pressed|active` (Material, shadcn, Fluent Blue);
+ * `foreground` trên `background`; `X-text` trên mặt nhạt `X-subtle|bg|soft|container|background`.
+ * `X-text` KHÔNG ghép với `X`: trong Fluent Blue/Ant `primary-text` là chữ màu trên surface.
+ */
+const isLabel = (key: string): boolean => /(?:^|-)on-/.test(key) || /(?:^|-)foreground$/.test(key);
+
+function pairTargets(key: string): string[] {
+  let m = /^(.*?)(?:^|-)on-(.+)$/.exec(key);
+  if (m) {
+    const p = m[1] ? `${m[1]}-` : "";
+    return STATES.map((s) => `${p}${m![2]}${s}`);
+  }
+  m = /^(.*)-foreground$/.exec(key);
+  if (m) return STATES.map((s) => `${m![1]}${s}`);
+  m = /^(.*?)(?:^|-)foreground$/.exec(key);
+  if (m) return [`${m[1] ? `${m[1]}-` : ""}background`];
+  m = /^(.*)-text$/.exec(key);
+  if (m) return FILLS.map((f) => `${m![1]}${f}`);
+  return [];
+}
+
+/**
+ * Ghép cặp chữ–nền theo tên. Nền tìm trước trong cùng khối `{…}`; không có thì lấy định nghĩa
+ * duy nhất của tên đó trong cùng file (vd `:root` định nghĩa `--primary`, khối tối chỉ đè `--on-primary`).
+ * Tên có nhiều định nghĩa khác khối mà không cùng khối với chữ ⇒ bỏ (không đoán theme).
+ */
+export function findPairs(tokens: TokenDef[]): Pair[] {
+  const byScope = new Map<string, Map<string, TokenDef>>();
+  const byFile = new Map<string, Map<string, TokenDef[]>>();
+  for (const t of tokens) {
+    const key = words(t.name);
+    if (!byScope.has(t.scope)) byScope.set(t.scope, new Map());
+    byScope.get(t.scope)!.set(key, t);
+    const file = t.scope.slice(0, t.scope.lastIndexOf("#"));
+    if (!byFile.has(file)) byFile.set(file, new Map());
+    const f = byFile.get(file)!;
+    if (!f.has(key)) f.set(key, []);
+    f.get(key)!.push(t);
+  }
+  const pairs: Pair[] = [];
+  const seen = new Set<string>();
+  for (const fg of tokens) {
+    const file = fg.scope.slice(0, fg.scope.lastIndexOf("#"));
+    for (const target of pairTargets(words(fg.name))) {
+      let bg = byScope.get(fg.scope)?.get(target);
+      if (!bg) {
+        const defs = byFile.get(file)?.get(target) ?? [];
+        if (new Set(defs.map((d) => d.hex)).size === 1) bg = defs[0];
+      }
+      if (!bg || bg === fg) continue;
+      const id = `${fg.where}|${bg.where}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const fc = new Color(fg.hex);
+      const bc = new Color(bg.hex);
+      pairs.push({ fg, bg, lc: apca(fc, bc), wcag: wcag(fc, bc) });
+    }
+  }
+  return pairs;
+}
+
+// So trên số đã làm tròn như khi in ra: 4.497 in "4.5:1" thì không báo trượt.
+export const pairFails = (p: Pair): boolean => Math.round(Math.abs(p.lc)) < PAIR.lc || round(p.wcag, 2) < PAIR.wcag;
 
 const f2 = (n: number): string => n.toFixed(2);
 const lcs = (n: number): string => String(Math.round(n));
@@ -114,7 +194,7 @@ function hueRange(items: Array<{ h: number; c: number }>): string {
   return `${norm(Math.min(...offs))}–${norm(Math.max(...offs))}`;
 }
 
-export function analyzePalette(found: Found[], bgOpt?: Color): Analysis {
+export function analyzePalette(found: Found[], bgOpt?: Color, tokens: TokenDef[] = []): Analysis {
   const inferred = bgOpt ? undefined : inferBg(found);
   const bg = bgOpt ? swatch(bgOpt) : inferred!.bg;
   const bgColor = new Color(bg.hex);
@@ -214,6 +294,9 @@ export function analyzePalette(found: Found[], bgOpt?: Color): Analysis {
   let semanticSeen = 0;
   for (const i of all) {
     for (const n of i.names) {
+      // `on-success`, `destructive-foreground` là màu chữ đặt TRÊN mặt trạng thái (thường trắng/đen):
+      // không mang sắc của trạng thái — quy tắc 8-pairs chấm chúng.
+      if (isLabel(words(n))) continue;
       const s = SEMANTIC.find((x) => x.re.test(words(n)));
       if (!s) continue;
       semanticSeen++;
@@ -246,8 +329,21 @@ export function analyzePalette(found: Found[], bgOpt?: Color): Analysis {
   }
   mark("7-gamut", all.length > 0, before);
 
+  // 8 — chữ trên đúng mặt nền của nó (on-X trên X, X-text trên X-subtle…), không chỉ trên nền trang.
+  before = issues.length;
+  const pairs = findPairs(tokens);
+  for (const p of pairs.filter(pairFails)) {
+    issues.push({
+      hex: p.fg.hex,
+      rule: "8-pairs",
+      detail: `${p.fg.name} on ${p.bg.name} ${p.bg.hex}: Lc ${lcs(p.lc)}, ${f2(p.wcag)}:1 < Lc ${PAIR.lc} + ${PAIR.wcag}:1 (${p.fg.where})`,
+    });
+  }
+  mark("8-pairs", pairs.length > 0, before);
+  if (pairs.length) summary["pairs"] = `${pairs.length} text/fill pairs by token name, ${pairs.filter(pairFails).length} below Lc ${PAIR.lc} + ${PAIR.wcag}:1`;
+
   const rules = RULES.map((rule) => ({ rule, status: status[rule] ?? "n/a" }));
-  return { bg, bgSource: bgOpt ? "flag" : inferred!.source, mode, items: all, issues, rules, summary };
+  return { bg, bgSource: bgOpt ? "flag" : inferred!.source, mode, items: all, issues, rules, summary, pairs };
 }
 
 /** Cụm ≥5 màu cùng hue (±10°, C ≥ 0.03) trải L ≥ 0.4, xếp theo L tăng dần. */
