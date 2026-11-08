@@ -75,7 +75,8 @@ describe("generate", () => {
   it("preset neon-dark fixes the 3 weak lan-topo-card colors and passes every rule", () => {
     const { out } = run(["generate", "--preset", "neon-dark"]);
     expect(out).toContain("fixed[3]{token,from,to,why}:");
-    expect(field(out, "check")).toBe("7/7 rules passed");
+    // generate không sinh token chữ-trên-nền ⇒ 8-pairs n/a.
+    expect(field(out, "check")).toBe("7/7 rules passed, n/a: 8-pairs");
     const t = (JSON.parse(run(["generate", "--preset", "neon-dark", "--format", "json"]).out) as Record<string, Record<string, JsonToken>>)["dark"]!;
     for (const k of ["info", "bad"]) {
       expect(lOf(t[k]!), k).toBeGreaterThanOrEqual(0.7);

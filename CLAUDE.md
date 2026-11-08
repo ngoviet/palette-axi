@@ -11,6 +11,8 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
   ánh xạ gamut CSS Color 4, `maxChroma` và `solveLc` (tìm nhị phân trên L — tự viết, không dùng apcach).
 - `src/extract.ts` — gom màu bằng regex từ CSS/JS/HTML (bỏ chú thích `/* */`, entity `&#x…;`, alpha < 1).
 - `src/rules.ts` — 7 nguyên tắc thành phép chấm; ngưỡng ở hằng `T`. Dùng chung cho analyze và generate.
+  Quy tắc `8-pairs` (08/11/2026, học từ Fluent Blue): ghép chữ–nền theo tên token trong cùng khối `{}`
+  (`extract.ts` ghi `tokens[]` kèm scope), ngưỡng `PAIR` = Lc 60 + 4.5:1. `generate` không có token ⇒ n/a.
 - `src/presets.ts` — preset (neon-dark = lan-topo-card, 3 màu yếu sửa khi xuất).
 - `src/commands/*` — mỗi lệnh một file; trả object (SDK render TOON) hoặc chuỗi (`--format css|tailwind|json`).
 - `test/` — vitest chạy **bin đã build** (`dist/`, global-setup build trước) qua `spawnSync`, không gọi mạng.
@@ -24,6 +26,9 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 - Giấy phép: KHÔNG thêm `apca-w3` hay `apcach` (kéo theo Limited W3 License). APCA lấy từ Color.js (MIT).
 - Fixture `test/fixtures/lan-topo-card.css` phải giữ đúng số đo đối chiếu (5 trung tính H 257–266 C ≤ 0.062,
   12/16 nhấn trong L 0.70–0.80, `#3b82f6` L 0.623 5.12:1 Lc −37, `#e6edf7` 15.97:1 Lc −95, `#8ea3c2` Lc −51).
+- Fixture `test/fixtures/fluent-blue-0.2.0.css` (vai trò màu thật của Fluent Blue, sáng + tối): 40 cặp, 17 trượt;
+  số WCAG đối chiếu bằng công thức `contrast_ratio` của chính Fluent Blue.
+- `8-pairs` chưa đọc token dạng kênh trần của shadcn cũ (`--primary: 222 47% 11%`) hay `var()` ⇒ n/a ở các file đó.
 
 ## CI
 

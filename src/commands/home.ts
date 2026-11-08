@@ -17,7 +17,7 @@ export function homeHeader(description: string): Record<string, unknown> {
 export async function homeView(args: string[], cwd = process.cwd()): Promise<Record<string, unknown>> {
   parseCommandArgs("home", args);
   const ex = extract([cwd], { maxFiles: 400, cwd });
-  const a = analyzePalette(ex.colors);
+  const a = analyzePalette(ex.colors, undefined, ex.tokens);
   const out: Record<string, unknown> = {};
   if (!a.items.length) {
     out["here"] = `0 colors found in ${ex.files} files under ${cwd}`;

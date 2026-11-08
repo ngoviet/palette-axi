@@ -33,6 +33,7 @@ the \`#\` (\`3b82f6\`): an unquoted \`#…\` is a shell comment and silently dis
 5. Ramps taper chroma at both ends (Tailwind 11 steps, Radix 12 steps).
 6. One role per step (Radix: 1–2 bg, 3–5 component bg, 6–8 borders, 9–10 solid, 11–12 text); one meaning per hue: success green, warning amber, error red, info blue.
 7. Check by machine: APCA Lc 90 body preferred, 75 body minimum, 60 content text, 45 large text/icons, 30 secondary, 15 invisible; always with the WCAG 2 ratio (4.5:1); clamp to sRGB.
+8. Check text on its own fill, not only on the page bg: \`analyze\` pairs tokens by name in the same \`{}\` block (\`on-X\` / \`X-foreground\` on \`X\` and its hover/pressed/active, \`foreground\` on \`background\`, \`X-text\` on \`X-subtle\`/\`-bg\`/\`-soft\`/\`-container\`) and needs Lc 60 + 4.5:1 for each (rule \`8-pairs\`). White labels on amber or green buttons are the usual failure.
 
 ## Workflow
 

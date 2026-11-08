@@ -1,0 +1,88 @@
+/* Fluent Blue 0.2.0 (github.com/danieldev23/fluent-blue, MIT) — vai trò màu cuối cùng của theme
+   sáng và tối, chép tay từ fluent_blue/core/palette.py (light_colors / dark_colors sau khi đè
+   _ACCESSIBLE_LIGHT / _ACCESSIBLE_DARK), 08/11/2026. Dùng làm fixture cho quy tắc 8-pairs:
+   test_contrast.py của họ kiểm on-primary, on-error nhưng bỏ sót on-success, on-warning, on-info. */
+
+:root {
+  --background: #F5F5F5;
+  --surface: #FFFFFF;
+  --text-primary: #141414;
+  --text-secondary: #595959;
+
+  --primary: #0E68EA;
+  --primary-hover: #0958D9;
+  --primary-pressed: #0848B8;
+  --primary-subtle: #E6F4FF;
+  --primary-text: #0958D9;
+  --on-primary: #FFFFFF;
+
+  --success: #52C41A;
+  --success-hover: #73D13D;
+  --success-pressed: #389E0D;
+  --success-subtle: #F6FFED;
+  --success-text: #237804;
+  --on-success: #FFFFFF;
+
+  --warning: #FAAD14;
+  --warning-hover: #FFC53D;
+  --warning-pressed: #D48806;
+  --warning-subtle: #FFFBE6;
+  --warning-text: #9A5C00;
+  --on-warning: #FFFFFF;
+
+  --error: #D92D30;
+  --error-hover: #C4262A;
+  --error-pressed: #A81E22;
+  --error-subtle: #FFF2F0;
+  --error-text: #CF1322;
+  --on-error: #FFFFFF;
+
+  --info: #1677FF;
+  --info-hover: #4096FF;
+  --info-pressed: #0958D9;
+  --info-subtle: #E6F4FF;
+  --info-text: #0958D9;
+  --on-info: #FFFFFF;
+}
+
+[data-theme="dark"] {
+  --background: #000000;
+  --surface: #141414;
+  --text-primary: #E6E6E6;
+  --text-secondary: #A6A6A6;
+
+  --primary: #1668DC;
+  --primary-hover: #1A6DE4;
+  --primary-pressed: #1554AD;
+  --primary-subtle: #111A2C;
+  --primary-text: #69B1FF;
+  --on-primary: #FFFFFF;
+
+  --success: #49AA19;
+  --success-hover: #6ABE39;
+  --success-pressed: #3C8618;
+  --success-subtle: #162312;
+  --success-text: #73D13D;
+  --on-success: #FFFFFF;
+
+  --warning: #D89614;
+  --warning-hover: #E8B339;
+  --warning-pressed: #AA7714;
+  --warning-subtle: #2B2111;
+  --warning-text: #FFC53D;
+  --on-warning: #FFFFFF;
+
+  --error: #C93538;
+  --error-hover: #D13D40;
+  --error-pressed: #A82B2E;
+  --error-subtle: #2C1618;
+  --error-text: #FF7875;
+  --on-error: #FFFFFF;
+
+  --info: #1668DC;
+  --info-hover: #3C89E8;
+  --info-pressed: #1554AD;
+  --info-subtle: #111A2C;
+  --info-text: #69B1FF;
+  --on-info: #FFFFFF;
+}
