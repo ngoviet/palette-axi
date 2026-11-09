@@ -24,9 +24,11 @@ export function tryParse(input: string): Color | undefined {
   const s = input.trim();
   try {
     const c = new Color(BARE_HEX.test(s) ? `#${s}` : s);
-    if (!c.coords || c.coords.some((x) => typeof x !== "number" || Number.isNaN(x))) {
+    // CSS Color 4 `none` (Color.js: null) = 0. Chuỗi (`rgb(a,b,c)` trong mã JS) không phải màu.
+    if (!c.coords || c.coords.some((x) => x !== null && (typeof x !== "number" || Number.isNaN(x)))) {
       return undefined;
     }
+    if (c.coords.some((x) => x === null)) c.coords = c.coords.map((x) => x ?? 0) as typeof c.coords;
     return c;
   } catch {
     return undefined;

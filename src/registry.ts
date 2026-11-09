@@ -22,7 +22,7 @@ export const COMMANDS: Record<string, CommandSpec> = {
   analyze: { usage: "analyze <file|dir|color…> [--bg c] [--strict]", summary: "collect colors from CSS/JS/HTML, measure OKLCH + APCA + WCAG vs the background, list issues per rule", help: ANALYZE_HELP, run: analyzeCommand },
   contrast: { usage: "contrast <fg> <bg> [--size px] [--weight n]", summary: "WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes", help: CONTRAST_HELP, run: contrastCommand },
   generate: { usage: "generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--preset neon-dark] [--format toon|css|tailwind|json]", summary: "build a theme by the 7 rules (tinted neutrals, accents at equal contrast), re-scored by analyze", help: GENERATE_HELP, run: generateCommand },
-  scale: { usage: "scale <color|hue> [--steps 11|12] [--mode light|dark]", summary: "one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step", help: SCALE_HELP, run: scaleCommand },
+  scale: { usage: "scale <color|hue> [--steps 11|12] [--mode light|dark] [--bg c] [--format toon|css]", summary: "one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step", help: SCALE_HELP, run: scaleCommand },
 };
 
 export function topLevelHelp(): string {

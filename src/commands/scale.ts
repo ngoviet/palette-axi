@@ -116,7 +116,7 @@ export async function scaleCommand(args: string[]): Promise<Record<string, unkno
     check: `chroma peaks at step ${scale[peakIdx]!.step} (${scale[peakIdx]!.s.c.toFixed(3)}), ends ${scale[0]!.s.c.toFixed(3)} / ${scale[scale.length - 1]!.s.c.toFixed(3)} ${taper ? "✓ tapered" : "✗ peak at an end"}`,
     help: [
       ...list.help,
-      `Run \`${commandLine("palette-axi scale", args.filter((a) => a !== "--format" && a !== "toon"))} --format css\` for CSS custom properties`,
+      `Run \`${commandLine("palette-axi scale", args, ["--format"])} --format css\` for CSS custom properties`,
       `Run \`palette-axi contrast ${q(scale[steps === 11 ? 4 : 10]!.s.hex)} ${q(bg.hex)}\` to check one step as text`,
     ],
   };

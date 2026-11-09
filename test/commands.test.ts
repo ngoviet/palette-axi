@@ -115,3 +115,32 @@ describe("scale", () => {
     expect(run(["scale", "#808080"]).code).toBe(2);
   });
 });
+
+describe("review 0.2: parsing and help[] polish", () => {
+  it("CSS Color 4 `none` reads as 0 instead of failing", () => {
+    const { out, code } = run(["contrast", "oklch(0.95 none 30)", "0a1122"]);
+    expect(code).toBe(0);
+    expect(field(out, "fg")).toMatch(/^#[0-9a-f]{6} oklch 0\.950 0\.000 0$/);
+  });
+
+  it("help[] drops --format=… and --limit=… instead of repeating them", () => {
+    const scale = run(["scale", "3b82f6", "--format=toon", "--limit=3"]).out;
+    expect(scale).toContain("Run `palette-axi scale 3b82f6 --format css`");
+    expect(scale).toContain("Run `palette-axi scale 3b82f6 --format=toon --limit 11`");
+    expect(scale).not.toContain("--limit=3");
+    const gen = run(["generate", "--seed", "262", "--format=toon"]).out;
+    expect(gen).toContain("Run `palette-axi generate --seed 262 --format css > tokens.css`");
+  });
+
+  it("tailwind --mode both also honours [data-theme] like --format css", () => {
+    const out = run(["generate", "--seed", "262", "--mode", "both", "--format", "tailwind"]).out;
+    expect(out).toContain(':root:not([data-theme="light"])');
+    expect(out).toContain('[data-theme="dark"] {');
+  });
+
+  it("truncated issues point at --full", () => {
+    const out = run(["analyze", "test/fixtures/fluent-blue-0.2.0.css"]).out;
+    expect(field(out, "issues_count")).toMatch(/^20 of \d+ total$/);
+    expect(out).toMatch(/--full` to list all \d+ issues/);
+  });
+});

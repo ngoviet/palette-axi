@@ -204,7 +204,12 @@ ${cssVars(dark, "  ")}
 function renderTailwind(themes: Theme[], header: string): string {
   const first = themes[0]!;
   let s = `${header}\n/* Tailwind v4: classes bg-bg, text-fg, text-dim, border-border, text-primary… */\n@theme {\n${cssVars(first, "  ", "color-")}\n}\n`;
-  if (themes.length === 2) s += `@media (prefers-color-scheme: dark) {\n  :root {\n${cssVars(themes[1]!, "    ", "color-")}\n  }\n}\n`;
+  // Giống --format css: tối theo hệ điều hành trừ khi ép sáng, và ép tối bằng [data-theme="dark"].
+  if (themes.length === 2) {
+    const dark = themes[1]!;
+    s += `@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n${cssVars(dark, "    ", "color-")}\n  }\n}\n`;
+    s += `[data-theme="dark"] {\n${cssVars(dark, "  ", "color-")}\n}\n`;
+  }
   return s;
 }
 
@@ -274,7 +279,7 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
   const out: Record<string, unknown> = { seed: seedLine };
   if (themes.length === 1) Object.assign(out, { mode: themes[0]!.mode }, block(themes[0]!));
   else for (const t of themes) out[t.mode] = block(t);
-  const base = commandLine("palette-axi generate", args.filter((a, i) => a !== "--format" && args[i - 1] !== "--format"));
+  const base = commandLine("palette-axi generate", args, ["--format"]);
   help.push(`Run \`${base} --format css > tokens.css\` (or tailwind, json) to write the tokens`);
   help.push("Run `palette-axi analyze <your css>` after wiring the tokens to re-check the real UI");
   if (!presetName) help.push(`Run \`palette-axi scale ${themes[0]!.accents[0]?.s.hex ? `"${themes[0]!.accents[0].s.hex}"` : "<color>"} --steps 12 --mode ${themes[themes.length - 1]!.mode}\` for a full ramp of one accent`);

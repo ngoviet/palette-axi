@@ -9,9 +9,11 @@ import { field, root, run } from "./helpers.js";
 
 describe("contract", () => {
   it("version matches package.json and the fast path answers", () => {
-    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string };
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string; scripts?: Record<string, string> };
     expect(VERSION).toBe(pkg.version);
     expect(run(["--version"]).out.trim()).toBe(VERSION);
+    const pack = pkg.scripts?.["install:global"] ?? "";
+    expect(pack).toContain(`palette-axi-${VERSION}.tgz`);
   });
 
   it("skill/SKILL.md is generated from the registry", () => {
