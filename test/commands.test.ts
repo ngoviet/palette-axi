@@ -94,8 +94,8 @@ describe("generate", () => {
     expect(out).toMatch(/light:\n {2}neutrals\[6\]/);
     expect(out).toMatch(/dark:\n {2}neutrals\[6\]/);
     expect(out).toContain("fixed[6]{token,from,to,why}:"); // sáng 6, tối 6
-    expect(out).toContain("check: 7/7 rules passed");
-    expect(out).toContain('check: "6/6 rules passed, n/a: 5-scale"');
+    expect(out).toContain('check: "7/7 rules passed, n/a: 8-pairs"');
+    expect(out).toContain('check: "6/6 rules passed, n/a: 5-scale 8-pairs"');
     const j = JSON.parse(run(["generate", "--preset", "cockpit", "--format", "json"]).out) as Record<string, Record<string, JsonToken>>;
     const light = j["light"]!;
     const dark = j["dark"]!;
