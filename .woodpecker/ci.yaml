@@ -1,5 +1,5 @@
-# CI trên Woodpecker tự host (PC4, https://ci.bepmamnon.com) — repo riêng tư nên không dùng
-# GitHub Actions (hết phút cho repo private từ 22/10/2026).
+# CI kiểm mã trên Woodpecker tự host (PC4, https://ci.bepmamnon.com). GitHub Actions chỉ chạy
+# kiểm README (.github/workflows/readme.yml) — xem mục CI trong CLAUDE.md.
 # CHỈ CHẠY khi repo đã được Enable trong https://ci.bepmamnon.com (Add repository).
 #
 # Mỗi bước là một container mới dùng chung thư mục đã clone. Test không gọi mạng; bài đo trên
