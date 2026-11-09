@@ -54,7 +54,8 @@ describe("generate", () => {
 
   it("a hex seed sets the primary hue; custom roles take name=hue", () => {
     const { out } = run(["generate", "--seed", "#22d3ee", "--roles", "primary,ok,brand=310", "--fields", "token,oklch"]);
-    expect(out).toContain("accents[3]{token,oklch}:");
+    // primary kéo theo on-primary (chữ trên nền primary) ⇒ 4 dòng.
+    expect(out).toContain("accents[4]{token,oklch}:");
     expect(out).toMatch(/primary,0\.\d+ 0\.\d+ 212/);
     expect(out).toMatch(/brand,0\.\d+ 0\.\d+ 310/);
   });
@@ -75,8 +76,8 @@ describe("generate", () => {
   it("preset neon-dark fixes the 3 weak lan-topo-card colors and passes every rule", () => {
     const { out } = run(["generate", "--preset", "neon-dark"]);
     expect(out).toContain("fixed[3]{token,from,to,why}:");
-    // generate không sinh token chữ-trên-nền ⇒ 8-pairs n/a.
-    expect(field(out, "check")).toBe("7/7 rules passed, n/a: 8-pairs");
+    // 0.4.0: dim/fg được chấm như chữ (Lc 60 + 4.5:1) ở 7-contrast; 5-scale không còn gộp trung tính + nhấn.
+    expect(field(out, "check")).toBe("6/6 rules passed, n/a: 5-scale 8-pairs");
     const t = (JSON.parse(run(["generate", "--preset", "neon-dark", "--format", "json"]).out) as Record<string, Record<string, JsonToken>>)["dark"]!;
     for (const k of ["info", "bad"]) {
       expect(lOf(t[k]!), k).toBeGreaterThanOrEqual(0.7);
@@ -93,14 +94,17 @@ describe("generate", () => {
     expect(out).toContain("principles[7]:");
     expect(out).toMatch(/light:\n {2}neutrals\[6\]/);
     expect(out).toMatch(/dark:\n {2}neutrals\[6\]/);
-    expect(out).toContain("fixed[6]{token,from,to,why}:"); // sáng 6, tối 6
-    expect(out).toContain('check: "7/7 rules passed, n/a: 8-pairs"');
-    expect(out).toContain('check: "6/6 rules passed, n/a: 5-scale 8-pairs"');
+    expect(out).toContain("fixed[7]{token,from,to,why}:"); // sáng 7 (thêm teal accent 2.78:1, 0.4.0)
+    expect(out).toContain("fixed[6]{token,from,to,why}:"); // tối 6
+    // Cả hai theme tự chấm đạt, muted/dim/fg chấm như chữ (Lc 60 + 4.5:1) — trước 0.4.0 sáng báo đạt dù trượt AA.
+    expect(out.match(/check: "6\/6 rules passed, n\/a: 5-scale 8-pairs"/g)).toHaveLength(2);
     const j = JSON.parse(run(["generate", "--preset", "cockpit", "--format", "json"]).out) as Record<string, Record<string, JsonToken>>;
     const light = j["light"]!;
     const dark = j["dark"]!;
-    for (const k of ["ok", "warn", "warn-strong"]) expect(Math.abs(light[k]!.lc), k).toBeGreaterThanOrEqual(60);
-    expect(Math.abs(light["muted"]!.lc)).toBeGreaterThanOrEqual(60);
+    for (const k of ["ok", "warn", "warn-strong", "accent", "muted"]) {
+      expect(Math.abs(light[k]!.lc), k).toBeGreaterThanOrEqual(60);
+      expect(light[k]!.wcag, k).toBeGreaterThanOrEqual(4.5); // nền sáng: Lc 60 một mình chỉ ≈ 3.5:1
+    }
     expect(light["bg"]!.hex).toBe("#f7f5f0"); // nhuốm ấm, không bị kéo về hue slate
     expect(light["primary"]!.hex).toBe("#1d4ed8"); // màu không có lỗi giữ nguyên
     expect(lOf(dark["bg"]!)).toBeLessThanOrEqual(0.2);

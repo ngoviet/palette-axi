@@ -33,9 +33,11 @@ one-screen [TOON](https://toonformat.dev/) summary with the next command to run.
 - **Text on its real fill.** Tokens are paired by name inside the same `{}` block (`on-primary` on `primary`,
   `foreground` on `background`, `danger-text` on `danger-subtle`…), so light and dark themes are checked
   separately, not just against the page background.
-- **Two contrast models.** APCA Lc (signed: negative = light text on dark) with the WCAG 2.1 ratio next to it,
-  and a pass/fail per use: body text, content text, large text, placeholder, divider.
-- **A fix, not just a verdict.** `contrast` suggests the nearest color with the same hue that passes content text.
+- **Two contrast models, both enforced.** APCA Lc (signed: negative = light text on dark) and the WCAG 2.1
+  ratio. Text needs both: on a light background Lc 60 alone is only about 3.5:1, below WCAG AA. Tokens named
+  as text (`ink`, `fg`, `text`, `muted`, `text-secondary`…) are scored as text whatever their chroma.
+- **A fix, not just a verdict.** `contrast` suggests the nearest color with the same hue (or grey) that passes
+  content text by both measures, Lc 62 and 4.5:1.
 - **Generate by the same rules.** `generate` builds a dark, light or dual theme from one hue and re-scores it with
   `analyze`; `scale` makes a Tailwind 50–950 or Radix 1–12 ramp. Export as TOON, CSS custom properties, a
   Tailwind v4 `@theme` block or JSON.
@@ -48,7 +50,7 @@ Requirements: **Node.js ≥ 20**.
 From the latest release (no clone needed):
 
 ```bash
-npm install -g https://github.com/ngoviet/palette-axi/releases/download/v0.3.1/palette-axi-0.3.1.tgz
+npm install -g https://github.com/ngoviet/palette-axi/releases/download/v0.4.0/palette-axi-0.4.0.tgz
 ```
 
 From source:
@@ -88,7 +90,7 @@ colors: "23 (5 neutral, 2 muted, 16 accent)"
 neutrals: "5, hue 257–266, C ≤0.062, tinted ✓"
 accents: "12/16 in L 0.70–0.80, 2 brighter (highlights), hue 13–350"
 contrast: "accents wcag ≥4.5 16/16, apca |Lc| ≥45 14/16"
-rules: "5/7 rules passed, failed: 4-band 7-contrast, n/a: 8-pairs"
+rules: "4/6 rules passed, failed: 4-band 7-contrast, n/a: 5-scale 8-pairs"
 issues[3]{hex,rule,detail}:
   #3b82f6,4-band,L 0.62 < 0.70; Lc -37
   #ef4444,4-band,L 0.64 < 0.70; Lc -37
@@ -110,9 +112,9 @@ help[4]: …
 | Command | What it does |
 | --- | --- |
 | `palette-axi` / `palette-axi home` | Quick check of the current directory (first 400 style and script files) plus the commands to go further. |
-| `analyze <file\|dir\|color…>` | Collect colors, measure OKLCH, APCA Lc and WCAG against the background, score the rules. `--bg <color>` sets the background (default: the most used dark or light neutral); `--strict` exits 1 on any issue. |
-| `contrast <fg> <bg>` | WCAG ratio, APCA Lc, pass/fail per use and a same-hue suggestion. `--size <px>` and `--weight <n>` give one verdict for that text. |
-| `generate --seed <hue\|color>` | A theme by the rules: `--mode dark\|light\|both`, `--roles a,b` (named hues or `brand=310`), `--lc <n>` target contrast for accents. |
+| `analyze <file\|dir\|color…>` | Collect colors, measure OKLCH, APCA Lc and WCAG against the background, score the rules. `--bg <color>` sets the background (default: a token named `bg`/`background`/`paper`, else the most used dark or light neutral, not counting `color:` uses); `--pair fg:bg,…` adds text/fill pairs by token name or color; `--ignore rule,…` skips rules your palette breaks on purpose; `--strict` exits 1 on any issue. |
+| `contrast <fg> <bg>` | WCAG ratio, APCA Lc, pass/fail per use and a same-hue suggestion that passes both. `--size <px>` and `--weight <n>` give one verdict for that text. |
+| `generate --seed <hue\|color>` | A theme by the rules: `--mode dark\|light\|both`, `--roles a,b` (named hues or `brand=310`), `--lc <n>` target contrast for accents, `--wcag <ratio>` WCAG floor for text and accents (default 4.5; lowering either prints a warning). Adds `on-primary` for text on the primary fill. |
 | `generate --preset neon-dark\|cockpit` | A real theme with its weak colors fixed and listed in `fixed[]`. |
 | `scale <color\|hue>` | One hue as a ramp: `--steps 11` (Tailwind 50–950) or `--steps 12` (Radix 1–12, step 9 = the seed), `--mode light\|dark`, `--bg <color>`. |
 | `update` | The installed version and how to install the latest release. No network call. |
@@ -148,17 +150,21 @@ Every calculation is done in OKLCH; hex appears only on output. Contrast and gam
 | # | Rule | Issue code |
 | --- | --- | --- |
 | 1 | Work in OKLCH; hex only on export | (method) |
-| 2 | Neutrals share one hue, tinted at chroma 0.01–0.06 | `2-tint` |
+| 2 | Neutrals share one hue, tinted at chroma 0.01–0.06 (status fills such as `ok-bg`, and pure white, are exempt) | `2-tint` |
 | 3 | A dark background is not black: L 0.13–0.20; a light one has L ≥ 0.93 | `3-bg` |
 | 4 | Accents sit on one lightness band (dark L 0.70–0.80, light L 0.45–0.70) with the most in-gamut chroma | `4-band` |
-| 5 | In a ramp of ≥ 5 steps, chroma peaks mid-scale and tapers at both ends | `5-scale` |
-| 6 | One meaning per hue: success green, warning amber, error red, info blue | `6-meaning` |
-| 7 | Text neutrals reach APCA \|Lc\| ≥ 60, accents ≥ 45; every color inside sRGB | `7-contrast`, `7-gamut` |
-| 8 | Text tokens on their own fill (`on-X` / `X-foreground` on `X` and its `-hover`/`-pressed`/`-active`, `foreground` on `background`, `X-text` on `X-subtle`/`-bg`/`-soft`/`-container`): Lc 60 and 4.5:1 | `8-pairs` |
+| 5 | In a ramp of ≥ 5 accents (or tokens named like `blue-500`), chroma peaks mid-scale and tapers at both ends | `5-scale` |
+| 6 | One meaning per hue: success (`ok`, `success`) green, warning amber, error red, info blue | `6-meaning` |
+| 7 | Text tokens reach Lc 60 and 4.5:1 on the page background; focus rings and input borders 3:1 (WCAG 1.4.11); other neutrals used as text \|Lc\| ≥ 60; accents \|Lc\| ≥ 45 and 3:1; muted greys at least 3:1; every color inside sRGB | `7-contrast`, `7-gamut` |
+| 8 | Text tokens on their own fill (`on-X` / `X-foreground` on `X` and its `-hover`/`-pressed`/`-active`, `foreground` on `background`, `X-text` / `X-ink` on `X-subtle`/`-bg`/`-soft`/`-container`, plus `--pair`): Lc 60 and 4.5:1 | `8-pairs` |
 
-Rule 8 does not yet read bare channel tokens (old shadcn `--primary: 222 47% 11%`) or `var()` references; those
-files report it as `n/a`. Color names (`red`, `white`), `var()` and `color-mix()` are not collected, and
-translucent colors (alpha < 1) are counted but not scored.
+**Limits.** palette-axi compares token colors, not rendered pages: it does not see which text sits on which
+element, so it does not replace axe or another DOM check — run both. Text tokens are recognised by name; a
+token named otherwise is scored only by the generic neutral rule, so pair it with `--pair`. Decorative borders
+and dividers are not held to 3:1. Rule 8 does not yet read bare channel tokens (old shadcn
+`--primary: 222 47% 11%`) or `var()` references; those files report it as `n/a`. Color names (`red`,
+`white`), `var()` and `color-mix()` are not collected, and translucent colors (alpha < 1) are counted but not
+scored. Text-size thresholds in `contrast --size` ignore weight below 14 px and between 14 and 24 px.
 
 ### Presets
 

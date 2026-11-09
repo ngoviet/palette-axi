@@ -12,7 +12,7 @@ next command. Errors go to stdout as `error:`/`code:`; exit 2 = bad usage, exit 
 (`analyze --strict` with issues ⇒ `ISSUES_FOUND`). **Quote hex colors** (`"#3b82f6"`) or drop
 the `#` (`3b82f6`): an unquoted `#…` is a shell comment and silently disappears.
 
-## The 7 rules it scores and builds by (all in OKLCH)
+## The 8 rules it scores and builds by (all in OKLCH)
 
 1. Work in OKLCH (L = perceived lightness); hex only at export.
 2. Neutrals (bg, text, borders) share the primary hue at chroma 0.01–0.06.
@@ -20,22 +20,23 @@ the `#` (`3b82f6`): an unquoted `#…` is a shell comment and silently disappear
 4. Accents sit on one lightness band (dark bg: L 0.70–0.80, or equal APCA Lc), max in-gamut chroma ≤ 0.20; only the hue changes.
 5. Ramps taper chroma at both ends (Tailwind 11 steps, Radix 12 steps).
 6. One role per step (Radix: 1–2 bg, 3–5 component bg, 6–8 borders, 9–10 solid, 11–12 text); one meaning per hue: success green, warning amber, error red, info blue.
-7. Check by machine: APCA Lc 90 body preferred, 75 body minimum, 60 content text, 45 large text/icons, 30 secondary, 15 invisible; always with the WCAG 2 ratio (4.5:1); clamp to sRGB.
-8. Check text on its own fill, not only on the page bg: `analyze` pairs tokens by name in the same `{}` block (`on-X` / `X-foreground` on `X` and its hover/pressed/active, `foreground` on `background`, `X-text` on `X-subtle`/`-bg`/`-soft`/`-container`) and needs Lc 60 + 4.5:1 for each (rule `8-pairs`). White labels on amber or green buttons are the usual failure.
+7. Check by machine: APCA Lc 90 body preferred, 75 body minimum, 60 content text, 45 large text/icons, 30 secondary, 15 invisible; **and** the WCAG 2 ratio (4.5:1 text, 3:1 icons, focus rings, input borders). On a light bg Lc 60 alone is only ≈ 3.5:1, so text needs both. Tokens named as text (`ink`, `fg`, `text`, `muted`, `dim`, `text-secondary`…) are scored as text whatever their chroma; clamp to sRGB.
+8. Check text on its own fill, not only on the page bg: `analyze` pairs tokens by name in the same `{}` block (`on-X` / `X-foreground` on `X` and its hover/pressed/active, `foreground` on `background`, `X-text` / `X-ink` on `X-subtle`/`-bg`/`-soft`/`-container`) and needs Lc 60 + 4.5:1 for each (rule `8-pairs`); `--pair fg:bg` adds pairs by hand. White labels on amber or green buttons are the usual failure.
 
 ## Workflow
 
 1. **Audit** what exists: `palette-axi analyze <css|dir|bundle> --bg "<bg>"` ⇒ `issues[]{hex,rule,detail}`.
    Pass the real page background with `--bg` (otherwise the most used dark/light neutral is taken).
 2. **Check a pair**: `palette-axi contrast "<fg>" "<bg>" [--size 14]` ⇒ verdict per use and a `suggest`
-   color of the same hue that reaches content-text contrast.
+   color of the same hue that reaches content text by both measures (Lc 62 and 4.5:1).
 3. **Build** a new theme: `palette-axi generate --seed <hue|"#hex"> --mode dark|light|both --format css`;
    the TOON view ends with `check:` (the same rules re-run on the result).
    `--preset neon-dark` is the lan-topo-card neon look with its weak colors fixed.
    `--preset cockpit` is the cockpit-tools light + dark theme (warm paper bg, slate text, blue → teal);
    it also returns `principles[]`, and `--format css` adds gradient, card and alpha-border variables.
 4. **Ramp** one hue: `palette-axi scale "<color>" [--steps 12 --mode dark]`.
-5. Re-run `analyze` on the real UI after wiring tokens; add `--strict` in CI.
+5. Re-run `analyze` on the real UI after wiring tokens; add `--strict` in CI (`--ignore <rule>` for a
+   rule the palette breaks on purpose).
 
 Run `palette-axi` with no arguments for a quick check of the current directory.
 
@@ -44,9 +45,9 @@ Run `palette-axi` with no arguments for a quick check of the current directory.
 | Command | What it returns |
 | --- | --- |
 | `palette-axi home` | quick palette check of the current directory + next commands (same as no arguments) |
-| `palette-axi analyze <file\|dir\|color…> [--bg c] [--strict]` | collect colors from CSS/JS/HTML, measure OKLCH + APCA + WCAG vs the background, list issues per rule |
-| `palette-axi contrast <fg> <bg> [--size px] [--weight n]` | WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes |
-| `palette-axi generate --seed <hue\|color> [--mode dark\|light\|both] [--roles a,b] [--preset neon-dark\|cockpit] [--format toon\|css\|tailwind\|json]` | build a theme by the 7 rules (tinted neutrals, accents at equal contrast), re-scored by analyze |
+| `palette-axi analyze <file\|dir\|color…> [--bg c] [--pair fg:bg] [--ignore rule] [--strict]` | collect colors from CSS/JS/HTML, measure OKLCH + APCA + WCAG vs the background, list issues per rule |
+| `palette-axi contrast <fg> <bg> [--size px] [--weight n]` | WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes both |
+| `palette-axi generate --seed <hue\|color> [--mode dark\|light\|both] [--roles a,b] [--lc n] [--wcag r] [--preset neon-dark\|cockpit] [--format toon\|css\|tailwind\|json]` | build a theme by the palette rules (tinted neutrals, accents at equal contrast, text at Lc 60 + 4.5:1), re-scored by analyze |
 | `palette-axi scale <color\|hue> [--steps 11\|12] [--mode light\|dark] [--bg c] [--format toon\|css]` | one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step |
 | `palette-axi update [--check]` | installed version + how to install the latest GitHub release (not on npm; no network call) |
 
@@ -57,5 +58,6 @@ Every command accepts `--fields a,b`, `--limit <n>`, `--full` and `--help`.
 - Reads hex, rgb(), hsl(), hwb(), oklch(), oklab(), lab(), lch(). Not read: color names (red, white),
   `var()`, `color-mix()`, colors built in code. Translucent colors (alpha < 1) are counted, not scored.
 - Rule 6 is scored only when tokens carry meaningful names (success, warn, error, info…).
-- APCA is a WCAG 3 *candidate*; WCAG 2 is still the legal bar, so both are always shown.
-- `fix` (repair a color in place) is planned for v0.2; until then `contrast` prints `suggest`.
+- APCA is a WCAG 3 *candidate*; WCAG 2 is still the legal bar, so both are always shown and both gate text.
+- It compares token colors, not rendered pages: it does not replace axe or another DOM check, it adds to it.
+- No command repairs a file in place; `contrast` prints a `suggest` color to copy.

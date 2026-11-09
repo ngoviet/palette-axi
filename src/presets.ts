@@ -100,7 +100,8 @@ export const PRESETS: Record<string, Preset> = {
         accents: [
           { token: "primary", hex: "#1d4ed8", role: "brand blue, solid buttons (--primary)" },
           { token: "primary-hover", hex: "#1e40af", role: "hover, deeper on purpose (--primary-hover)" },
-          { token: "accent", hex: "#0ea5a5", role: "brand teal, gradient end (--accent)" },
+          // 2.78:1 trên nền giấy: dưới cả 3:1 của icon (WCAG 1.4.11) ⇒ sửa như các màu trạng thái (0.4.0).
+          { token: "accent", hex: "#0ea5a5", role: "brand teal, gradient end (--accent)", fix: "band" },
           { token: "ok", hex: "#22c55e", role: "success (--success)", fix: "band" },
           { token: "warn", hex: "#f59e0b", role: "warning (--warning)", fix: "band" },
           { token: "warn-strong", hex: "#f97316", role: "strong warning (--warning-strong)", fix: "band" },

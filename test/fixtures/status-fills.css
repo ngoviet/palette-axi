@@ -1,0 +1,10 @@
+:root {
+  --bg: #f4f7fb;
+  --text: #1d232a;
+  --border: #c9d0d7;
+  --primary: #0b5cad;
+  --error: #b42318;
+  --error-bg: #fdecea;
+  --success: #14532d;
+  --success-bg: #e7f4ea;
+}

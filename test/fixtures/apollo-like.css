@@ -1,0 +1,22 @@
+/*
+ * Bảng màu mô phỏng base.css của Apollo Vận hành (đánh giá palette-axi 0.3.1, 09/11/2026): cùng tên token,
+ * nhiều mã lấy y bài (#7b8794, #f4f6f8). Nền sáng, chữ slate, nền trạng thái xanh lá / đỏ / xanh dương.
+ * 0.3.1 báo nhầm 4 màu 2-tint, chọn nhầm nền (--info-bg) và bỏ sót 3 ca làm nhạt chữ (xem test).
+ */
+:root {
+  --paper: #ffffff;
+  --wash: #f4f6f8;
+  --ink: #1f2933;
+  --muted: #52606d;
+  --line: #7b8794;
+  --brand: #1d5fb4;
+  --link: #1d5fb4;
+  --focus: #2b6cb0;
+  --danger: #c81e1e;
+  --ok-bg: #e3f5ea;
+  --ok-ink: #1e5a3a;
+  --error-bg: #fdecea;
+  --error-ink: #9b1c1c;
+  --info-bg: #e6f0fb;
+  --info-ink: #1f4e8c;
+}

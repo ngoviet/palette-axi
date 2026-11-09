@@ -3,7 +3,7 @@ import { apca, Color, fmtOklch, parseOrFail, round, solveLc, swatch, toHex, wcag
 import { q, renderList, type Row } from "../views.js";
 
 export const CONTRAST_HELP = `usage: palette-axi contrast <fg> <bg> [--size <px>] [--weight <100-900>]
-description: WCAG 2.1 ratio and APCA Lc for one text/background pair, a pass/fail per use, and the nearest same-hue color that passes content text
+description: WCAG 2.1 ratio and APCA Lc for one text/background pair, a pass/fail per use, and the nearest same-hue color that passes content text by both measures (Lc 62 and 4.5:1)
 args:
   <fg> <bg>: any CSS color; quote hex ("#e6edf7") or write it without # (e6edf7)
 flags[2]:
@@ -75,12 +75,15 @@ export async function contrastCommand(args: string[]): Promise<Record<string, un
     out["passes"] = `${rows.filter((r) => r.pass === "yes").length}/${rows.length} uses`;
     Object.assign(out, list.out);
   }
-  // Gợi ý: cùng hue, chỉ đổi L (và C trong gamut) để đạt chữ nội dung — nền tảng cho lệnh fix (v0.2).
-  if (abs < 60 && !fs.achromatic) {
-    const s = solveLc(bgc, fs.h, 62, { cMax: Math.max(fs.c, 0.02) });
+  // Gợi ý: cùng hue, chỉ đổi L (và C trong gamut) để đạt chữ nội dung theo CẢ HAI chuẩn (Lc 62 và
+  // WCAG 4.5:1). Chỉ nhắm Lc thì trên nền sáng gợi ý vẫn dưới AA (#8fa397 trên #e3f5ea ⇒ 3.88:1).
+  if (abs < 60 || round(ratio, 2) < 4.5) {
+    const s = solveLc(bgc, fs.h, 62, { cMax: fs.achromatic ? 0 : Math.max(fs.c, 0.02), wcag: 4.5 });
     const sh = toHex(s.color);
     const ss = swatch(new Color(sh));
-    out["suggest"] = `${sh} oklch ${fmtOklch(ss)}: same hue, Lc ${Math.round(apca(new Color(sh), bgc))}, ${round(wcag(new Color(sh), bgc), 2)}:1`;
+    const sc = new Color(sh);
+    const what = fs.achromatic ? "same grey family" : "same hue";
+    out["suggest"] = `${sh} oklch ${fmtOklch(ss)}: ${what}, Lc ${Math.round(apca(sc, bgc))}, ${round(wcag(sc, bgc), 2)}:1${s.reached ? "" : " (best reachable on this bg, still short)"}`;
     help.push(`Run \`palette-axi contrast ${q(sh)} ${q(bs.hex)}\` to confirm the suggested color`);
   }
   if (sizeRaw === undefined) help.push(`Run \`palette-axi contrast ${q(fs.hex)} ${q(bs.hex)} --size 16\` for a verdict at one text size`);

@@ -15,6 +15,8 @@ export interface Found {
   /** file:dòng lần gặp đầu. */
   where: string;
   count: number;
+  /** Số lần là giá trị của `color:` (màu chữ): không tính khi đoán nền trang. */
+  fgUses?: number;
 }
 
 /** Một lần gán màu cho một tên token, kèm khối `{…}` chứa nó (để ghép cặp theo tên không lẫn theme sáng/tối). */
@@ -98,21 +100,22 @@ export function extractFromText(source: string, file: string, into: Map<string, 
     // `cond ? x : "#94a3b8"` — x là nhánh ternary, không phải tên.
     const name = m && !/\?\s*$/.test(prefix.slice(0, m.index)) ? m[1] : undefined;
     const where = `${file}:${line + 1}`;
-    addFound(into, s, raw, name, where);
+    addFound(into, s, raw, name, where, m?.[1] === "color");
     if (tokens && name && !GENERIC.has(name)) tokens.push({ name, hex: s.hex, scope, where });
   }
 }
 
-function addFound(into: Map<string, Found>, s: Swatch, raw: string, name: string | undefined, where: string): void {
+function addFound(into: Map<string, Found>, s: Swatch, raw: string, name: string | undefined, where: string, fg = false): void {
   // Trùng hex nhưng ngoài gamut (oklch kẹp ra cùng hex) vẫn tách riêng.
   const key = s.inGamut ? s.hex : `${s.hex}|${raw}`;
   const named = name && !GENERIC.has(name) ? name : undefined;
   const prev = into.get(key);
   if (prev) {
     prev.count++;
+    if (fg) prev.fgUses = (prev.fgUses ?? 0) + 1;
     if (named && !prev.names.includes(named)) prev.names.push(named);
   } else {
-    into.set(key, { swatch: s, raw, names: named ? [named] : [], where, count: 1 });
+    into.set(key, { swatch: s, raw, names: named ? [named] : [], where, count: 1, ...(fg ? { fgUses: 1 } : {}) });
   }
 }
 

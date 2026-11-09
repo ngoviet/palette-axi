@@ -33,9 +33,11 @@ tóm tắt [TOON](https://toonformat.dev/) gọn một màn hình, kèm lệnh n
 - **Chữ trên đúng mặt nền của nó.** Token được ghép cặp theo tên trong cùng khối `{}` (`on-primary` trên
   `primary`, `foreground` trên `background`, `danger-text` trên `danger-subtle`…), nên theme sáng và tối được
   kiểm riêng, không chỉ so với nền trang.
-- **Hai mô hình tương phản.** APCA Lc (có dấu: âm = chữ sáng trên nền tối) kèm tỉ lệ WCAG 2.1, và đạt/trượt theo
-  từng công dụng: chữ thân bài, chữ nội dung, chữ lớn, placeholder, đường kẻ.
-- **Có cách sửa, không chỉ phán.** `contrast` gợi ý màu gần nhất cùng sắc đạt mức chữ nội dung.
+- **Hai mô hình tương phản, cả hai đều bắt buộc.** APCA Lc (có dấu: âm = chữ sáng trên nền tối) và tỉ lệ
+  WCAG 2.1. Chữ phải đạt cả hai: trên nền sáng, riêng Lc 60 chỉ khoảng 3,5:1, dưới WCAG AA. Token có tên là chữ
+  (`ink`, `fg`, `text`, `muted`, `text-secondary`…) được chấm như chữ, bất kể độ bão hoà.
+- **Có cách sửa, không chỉ phán.** `contrast` gợi ý màu gần nhất cùng sắc (hoặc cùng họ xám) đạt mức chữ nội
+  dung theo cả hai chuẩn, Lc 62 và 4,5:1.
 - **Sinh theo cùng bộ quy tắc.** `generate` dựng theme tối, sáng hoặc cả hai từ một sắc rồi tự chấm lại bằng
   `analyze`; `scale` làm thang Tailwind 50–950 hoặc Radix 1–12. Xuất ra TOON, biến CSS, khối `@theme` của
   Tailwind v4 hoặc JSON.
@@ -48,7 +50,7 @@ Yêu cầu: **Node.js ≥ 20**.
 Từ bản release mới nhất (không cần clone):
 
 ```bash
-npm install -g https://github.com/ngoviet/palette-axi/releases/download/v0.3.1/palette-axi-0.3.1.tgz
+npm install -g https://github.com/ngoviet/palette-axi/releases/download/v0.4.0/palette-axi-0.4.0.tgz
 ```
 
 Từ mã nguồn:
@@ -88,7 +90,7 @@ colors: "23 (5 neutral, 2 muted, 16 accent)"
 neutrals: "5, hue 257–266, C ≤0.062, tinted ✓"
 accents: "12/16 in L 0.70–0.80, 2 brighter (highlights), hue 13–350"
 contrast: "accents wcag ≥4.5 16/16, apca |Lc| ≥45 14/16"
-rules: "5/7 rules passed, failed: 4-band 7-contrast, n/a: 8-pairs"
+rules: "4/6 rules passed, failed: 4-band 7-contrast, n/a: 5-scale 8-pairs"
 issues[3]{hex,rule,detail}:
   #3b82f6,4-band,L 0.62 < 0.70; Lc -37
   #ef4444,4-band,L 0.64 < 0.70; Lc -37
@@ -110,9 +112,9 @@ help[4]: …
 | Lệnh | Làm gì |
 | --- | --- |
 | `palette-axi` / `palette-axi home` | Kiểm nhanh thư mục hiện tại (400 tệp style và script đầu tiên) kèm các lệnh để đi tiếp. |
-| `analyze <file\|dir\|color…>` | Gom màu, đo OKLCH, APCA Lc và WCAG so với nền, chấm các quy tắc. `--bg <màu>` đặt nền (mặc định: trung tính tối hoặc sáng dùng nhiều nhất); `--strict` thoát 1 khi có issue. |
-| `contrast <fg> <bg>` | Tỉ lệ WCAG, APCA Lc, đạt/trượt theo công dụng và màu cùng sắc gợi ý. `--size <px>` và `--weight <n>` cho một kết luận cho đúng cỡ chữ đó. |
-| `generate --seed <hue\|color>` | Theme theo quy tắc: `--mode dark\|light\|both`, `--roles a,b` (tên sắc hoặc `brand=310`), `--lc <n>` độ tương phản đích của màu nhấn. |
+| `analyze <file\|dir\|color…>` | Gom màu, đo OKLCH, APCA Lc và WCAG so với nền, chấm các quy tắc. `--bg <màu>` đặt nền (mặc định: token tên `bg`/`background`/`paper`, không có thì trung tính tối hoặc sáng dùng nhiều nhất, không đếm lần dùng làm `color:`); `--pair chữ:nền,…` thêm cặp chữ–nền theo tên token hoặc màu; `--ignore quy-tắc,…` bỏ qua quy tắc bảng màu cố ý không theo; `--strict` thoát 1 khi có issue. |
+| `contrast <fg> <bg>` | Tỉ lệ WCAG, APCA Lc, đạt/trượt theo công dụng và màu cùng sắc gợi ý đạt cả hai chuẩn. `--size <px>` và `--weight <n>` cho một kết luận cho đúng cỡ chữ đó. |
+| `generate --seed <hue\|color>` | Theme theo quy tắc: `--mode dark\|light\|both`, `--roles a,b` (tên sắc hoặc `brand=310`), `--lc <n>` độ tương phản đích của màu nhấn, `--wcag <tỉ lệ>` sàn WCAG cho chữ và màu nhấn (mặc định 4.5; hạ một trong hai sẽ có cảnh báo). Thêm `on-primary` cho chữ trên nền primary. |
 | `generate --preset neon-dark\|cockpit` | Một theme thật, các màu yếu đã sửa và liệt kê trong `fixed[]`. |
 | `scale <color\|hue>` | Một sắc thành thang: `--steps 11` (Tailwind 50–950) hoặc `--steps 12` (Radix 1–12, bậc 9 = màu gốc), `--mode light\|dark`, `--bg <màu>`. |
 | `update` | Bản đang cài và cách cài bản release mới nhất. Không gọi mạng. |
@@ -148,17 +150,21 @@ Mọi phép tính làm trong OKLCH; hex chỉ xuất hiện ở đầu ra. Tươ
 | # | Quy tắc | Mã issue |
 | --- | --- | --- |
 | 1 | Làm việc trong OKLCH; hex chỉ ở bước xuất | (cách làm) |
-| 2 | Trung tính chung một sắc, nhuốm ở chroma 0.01–0.06 | `2-tint` |
+| 2 | Trung tính chung một sắc, nhuốm ở chroma 0.01–0.06 (nền trạng thái như `ok-bg`, và trắng tinh, được miễn) | `2-tint` |
 | 3 | Nền tối không đen tuyền: L 0.13–0.20; nền sáng có L ≥ 0.93 | `3-bg` |
 | 4 | Màu nhấn cùng một dải sáng (tối L 0.70–0.80, sáng L 0.45–0.70) với chroma cao nhất trong gamut | `4-band` |
-| 5 | Trong thang ≥ 5 bậc, chroma đỉnh ở giữa và giảm về hai đầu | `5-scale` |
-| 6 | Mỗi sắc một nghĩa: success xanh lá, warning vàng cam, error đỏ, info xanh dương | `6-meaning` |
-| 7 | Chữ trung tính đạt APCA \|Lc\| ≥ 60, màu nhấn ≥ 45; mọi màu nằm trong sRGB | `7-contrast`, `7-gamut` |
-| 8 | Token chữ trên đúng mặt nền của nó (`on-X` / `X-foreground` trên `X` và `-hover`/`-pressed`/`-active`, `foreground` trên `background`, `X-text` trên `X-subtle`/`-bg`/`-soft`/`-container`): Lc 60 và 4.5:1 | `8-pairs` |
+| 5 | Trong thang ≥ 5 màu nhấn (hoặc token tên kiểu `blue-500`), chroma đỉnh ở giữa và giảm về hai đầu | `5-scale` |
+| 6 | Mỗi sắc một nghĩa: success (`ok`, `success`) xanh lá, warning vàng cam, error đỏ, info xanh dương | `6-meaning` |
+| 7 | Token chữ đạt Lc 60 và 4.5:1 trên nền trang; vòng focus, viền ô nhập 3:1 (WCAG 1.4.11); trung tính khác dùng làm chữ \|Lc\| ≥ 60; màu nhấn \|Lc\| ≥ 45 và 3:1; xám trạng thái ít nhất 3:1; mọi màu nằm trong sRGB | `7-contrast`, `7-gamut` |
+| 8 | Token chữ trên đúng mặt nền của nó (`on-X` / `X-foreground` trên `X` và `-hover`/`-pressed`/`-active`, `foreground` trên `background`, `X-text` / `X-ink` trên `X-subtle`/`-bg`/`-soft`/`-container`, cùng `--pair`): Lc 60 và 4.5:1 | `8-pairs` |
 
-Quy tắc 8 chưa đọc token dạng kênh trần (shadcn cũ `--primary: 222 47% 11%`) hay tham chiếu `var()`; các tệp
-đó báo `n/a`. Tên màu (`red`, `white`), `var()` và `color-mix()` không được gom; màu trong suốt (alpha < 1)
-được đếm nhưng không chấm.
+**Giới hạn.** palette-axi so màu của token, không đo trang đã hiển thị: nó không biết chữ nào nằm trên phần tử
+nào, nên không thay được axe hay một phép kiểm DOM — hãy chạy cả hai. Token chữ được nhận theo tên; token đặt
+tên khác chỉ được chấm theo luật trung tính chung, nên hãy khai bằng `--pair`. Viền trang trí và đường kẻ không
+bị đòi 3:1. Quy tắc 8 chưa đọc token dạng kênh trần (shadcn cũ `--primary: 222 47% 11%`) hay tham chiếu
+`var()`; các tệp đó báo `n/a`. Tên màu (`red`, `white`), `var()` và `color-mix()` không được gom; màu trong suốt
+(alpha < 1) được đếm nhưng không chấm. Ngưỡng theo cỡ chữ của `contrast --size` chưa xét độ đậm dưới 14 px và từ
+14 đến 24 px.
 
 ### Preset
 
