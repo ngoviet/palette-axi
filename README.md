@@ -12,6 +12,7 @@ palette-axi analyze src --bg "#0a1122"               # gom màu, chấm 8 quy t�
 palette-axi contrast "#8ea3c2" "#0a1122" --size 14   # WCAG + APCA + gợi ý màu cùng sắc đạt chuẩn
 palette-axi generate --seed 262 --mode both --format css > tokens.css
 palette-axi generate --preset neon-dark --format tailwind
+palette-axi generate --preset cockpit --format css > cockpit.css   # sáng + tối, kèm nguyên tắc
 palette-axi scale "#3b82f6" --steps 12 --mode dark
 ```
 
@@ -36,6 +37,24 @@ dạng kênh trần của shadcn cũ (`--primary: 222 47% 11%`) hay `var()`: cá
 Nguồn: Evil Martians (OKLCH), Ottosson (Oklab), Radix Colors, Tailwind v4, Material dark theme, APCA,
 Evil Martians Harmony. Preset `neon-dark` lấy từ theme Neon của lan-topo-card, đã sửa 3 màu yếu
 (blue-500, red-500 vào dải sáng; chữ phụ lên Lc ≥ 60).
+
+Preset `cockpit` lấy từ `src/styles/base.css` của [cockpit-tools](https://github.com/jlcodes99/cockpit-tools)
+(đo 29/10/2026), có cả sáng lẫn tối (mặc định xuất cả hai). Đầu ra TOON có `principles[]` (7 nguyên tắc
+rút từ theme gốc: nền giấy ấm + chữ slate lạnh, cặp blue → teal, bề mặt đặc/trong suốt, viền bằng alpha
+của màu chữ…); `--format css` ghi thêm nguyên tắc ở đầu tệp và các biến `--bg-gradient`,
+`--gradient-primary`, `--card`, `--border`, `--border-light`, `--hover`, `--shadow-md`. Khi dùng
+`--roles`, các biến phụ tham chiếu token bị lọc cũng bị bỏ khỏi CSS. Có thể chọn `--mode light` hoặc
+`--mode dark`; preset không hỗ trợ chế độ được yêu cầu sẽ báo lỗi. Màu đã sửa (liệt kê trong `fixed[]`):
+
+| Chế độ | Token | Gốc → mới | Lý do |
+|---|---|---|---|
+| sáng | bg, surface | `#f6f5f2` → `#f7f5f0`, `#ffffff` → `#fdfcf7` | xám thuần (C < 0.005); nhuốm C 0.007 giữ hue ấm 91° |
+| sáng | muted | `#94a3b8` → `#717f93` | chữ Lc 44 → 62 |
+| sáng | ok, warn, warn-strong | `#22c55e`, `#f59e0b`, `#f97316` → `#009541`, `#b57300`, `#d35d00` | trên dải L 0.70, Lc 36–47 → 60 |
+| tối | bg | `#0f172a` → `#0c1427` | L 0.208 > 0.20 |
+| tối | muted, dim | `#64748b`, `#94a3b8` → `#a6b7d0`, `#becee4` | chữ Lc −28 / −51 → −62 / −75 |
+| tối | primary, bad | `#3b82f6`, `#ef4444` → `#6ca4ff`, `#ff716a` | dưới dải L 0.70 |
+| tối | primary-hover | `#2563eb` → `#91b7ff` | tối hơn primary (Lc −26); giờ sáng hơn, L 0.78 |
 
 ## Cài đặt
 

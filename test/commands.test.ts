@@ -87,6 +87,53 @@ describe("generate", () => {
     expect(t["fg"]!.hex).toBe("#e6edf7");
   });
 
+  it("preset cockpit builds light + dark, fixes weak colors and keeps the warm paper hue", () => {
+    const { out, code } = run(["generate", "--preset", "cockpit"]);
+    expect(code).toBe(0);
+    expect(out).toContain("principles[7]:");
+    expect(out).toMatch(/light:\n {2}neutrals\[6\]/);
+    expect(out).toMatch(/dark:\n {2}neutrals\[6\]/);
+    expect(out).toContain("fixed[6]{token,from,to,why}:"); // sáng 6, tối 6
+    expect(out).toContain('check: "7/7 rules passed, n/a: 8-pairs"');
+    expect(out).toContain('check: "6/6 rules passed, n/a: 5-scale 8-pairs"');
+    const j = JSON.parse(run(["generate", "--preset", "cockpit", "--format", "json"]).out) as Record<string, Record<string, JsonToken>>;
+    const light = j["light"]!;
+    const dark = j["dark"]!;
+    for (const k of ["ok", "warn", "warn-strong"]) expect(Math.abs(light[k]!.lc), k).toBeGreaterThanOrEqual(60);
+    expect(Math.abs(light["muted"]!.lc)).toBeGreaterThanOrEqual(60);
+    expect(light["bg"]!.hex).toBe("#f7f5f0"); // nhuốm ấm, không bị kéo về hue slate
+    expect(light["primary"]!.hex).toBe("#1d4ed8"); // màu không có lỗi giữ nguyên
+    expect(lOf(dark["bg"]!)).toBeLessThanOrEqual(0.2);
+    expect(lOf(dark["primary-hover"]!)).toBeGreaterThan(lOf(dark["primary"]!)); // hover sáng lên
+    expect(Math.abs(dark["dim"]!.lc)).toBeGreaterThan(Math.abs(dark["muted"]!.lc));
+    expect(dark["ok"]!.hex).toBe("#22c55e");
+  });
+
+  it("preset cockpit --format css carries principles and gradient/alpha vars in both modes", () => {
+    const out = run(["generate", "--preset", "cockpit", "--format", "css"]).out;
+    expect(out).toContain(" * Principles of cockpit:");
+    expect(out).toContain('[data-theme="dark"] {');
+    expect(out.match(/--card: color-mix\(/g)?.length).toBe(3); // :root, media, [data-theme=dark]
+    expect(out).toContain("--gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);");
+    expect(out).not.toContain("var(--glow)"); // không dùng gradient mặc định của generate
+    expect(run(["generate", "--preset", "cockpit", "--mode", "light", "--format", "css"]).out).not.toContain("prefers-color-scheme");
+  });
+
+  it("preset cockpit omits CSS variables whose tokens are filtered by roles", () => {
+    for (const mode of ["light", "dark", "both"]) {
+      const { out, code } = run(["generate", "--preset", "cockpit", "--mode", mode, "--roles", "warn", "--format", "css"]);
+      expect(code).toBe(0);
+      expect(out).not.toMatch(/--(?:bg-gradient|gradient-primary):/);
+      expect(out).toContain("--card: color-mix(");
+      expect(out).toContain("--warn: oklch(");
+      expect(out).not.toMatch(/var\(--(?:primary|accent)\)/);
+    }
+    const { out, code } = run(["generate", "--preset", "cockpit", "--roles", "primary,accent", "--format", "css"]);
+    expect(code).toBe(0);
+    expect(out.match(/--bg-gradient:/g)).toHaveLength(3);
+    expect(out.match(/--gradient-primary:/g)).toHaveLength(3);
+  });
+
   it("rejects contradictory flags with exit 2", () => {
     expect(run(["generate"]).code).toBe(2);
     expect(run(["generate", "--seed", "1", "--preset", "neon-dark"]).code).toBe(2);

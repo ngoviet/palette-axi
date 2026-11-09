@@ -1,6 +1,6 @@
 {
   "name": "palette-axi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Audit and generate UI color palettes in OKLCH: tinted neutrals, accents on one lightness band, APCA + WCAG contrast, sRGB gamut",
   "type": "module",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "check": "tsc -p tsconfig.json && eslint . && vitest run",
     "skill:build": "tsup --config tsup.scripts.config.ts && node build/scripts/skill.js",
     "skill:check": "tsup --config tsup.scripts.config.ts && node build/scripts/skill.js --check",
-    "install:global": "tsup && node -e \"require('fs').mkdirSync('build/pack',{recursive:true})\" && npm pack --pack-destination build/pack && npm install -g build/pack/palette-axi-0.2.0.tgz"
+    "install:global": "tsup && node -e \"require('fs').mkdirSync('build/pack',{recursive:true})\" && npm pack --pack-destination build/pack && npm install -g build/pack/palette-axi-0.3.0.tgz"
   },
   "dependencies": {
     "axi-sdk-js": "0.1.14",
