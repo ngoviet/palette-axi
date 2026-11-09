@@ -20,7 +20,12 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 ## Quy tắc
 
 - Đổi lệnh/summary ⇒ `npm run skill:build` (test fail nếu `skill/SKILL.md` lệch).
-- Đổi version ⇒ sửa cả `package.json` và `src/version.ts` (test kiểm).
+- Đổi version ⇒ sửa `package.json`, `src/version.ts` và tên `.tgz` trong script `install:global` (test kiểm cả ba).
+- Phụ thuộc (rà 09/11/2026, v0.2.0): giữ TypeScript 6.0 — `typescript-eslint` 8.72 chỉ nhận `<6.1`, chưa lên TS 7.
+  Còn 10 cảnh báo moderate `minimatch` qua eslint (chỉ devDeps, chờ eslint vá); đừng `npm audit fix --force` (hạ eslint về 9).
+- `allowScripts` ghim đúng bản esbuild đang cài (`npm ls esbuild`); nâng tsup/vitest thì sửa theo.
+- Màu CSS Color 4 có `none` (`oklch(0.7 none 30)`): Color.js trả `null` ⇒ `tryParse` đổi thành 0; toạ độ là chuỗi
+  (`rgb(a,b,c)` trong mã JS) vẫn bị loại.
 - Mỗi lệnh: cột mặc định 3–5, `--fields/--limit/--full`, rỗng in `0 … found`, có `help[]`.
 - Lỗi qua `fail(message, code, help)`; flag lạ ⇒ VALIDATION_ERROR (exit 2); `analyze --strict` có issue ⇒ ISSUES_FOUND (exit 1).
 - Giấy phép: KHÔNG thêm `apca-w3` hay `apcach` (kéo theo Limited W3 License). APCA lấy từ Color.js (MIT).

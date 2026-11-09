@@ -39,17 +39,21 @@ export function renderList(spec: ListSpec, flags: GlobalFlags): { out: Record<st
 }
 
 /**
- * Dựng lại lệnh để gợi ý trong help[]: bỏ --limit/--full cũ (help sẽ tự thêm), bọc nháy đối số có
+ * Dựng lại lệnh để gợi ý trong help[]: bỏ --limit/--full cũ (help sẽ tự thêm) và các cờ có giá trị
+ * trong `drop` (vd --format, khi help tự thêm --format css), bọc nháy đối số có
  * khoảng trắng hoặc ký tự shell (`#` không bọc sẽ thành chú thích).
  */
-export function commandLine(prefix: string, args: string[]): string {
+export function commandLine(prefix: string, args: string[], drop: readonly string[] = []): string {
   const kept: string[] = [];
+  const valued = ["--limit", ...drop];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--full") continue;
-    if (args[i] === "--limit") {
+    if (valued.includes(args[i]!)) {
       i++;
       continue;
     }
+    // Dạng `--limit=5` / `--format=toon` cũng bỏ, kẻo help[] lặp cờ.
+    if (valued.some((f) => args[i]!.startsWith(`${f}=`))) continue;
     const a = args[i]!;
     kept.push(/^[\w./:@,=-]+$/.test(a) ? a : `"${a.replace(/"/g, '\\"')}"`);
   }

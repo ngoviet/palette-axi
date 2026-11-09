@@ -3,7 +3,7 @@ import { fmtOklch, parseOrFail, round } from "../color.js";
 import { fail } from "../errors.js";
 import { extract } from "../extract.js";
 import { analyzePalette, pairFails, rulesLine, type Analysis } from "../rules.js";
-import { commandLine, q, renderList, type Row } from "../views.js";
+import { assertFields, commandLine, q, renderList, type Row } from "../views.js";
 
 export const ANALYZE_HELP = `usage: palette-axi analyze <file|dir|color…> [--bg <color>] [--strict]
 description: Collect every opaque color from CSS/JS/HTML (or colors given as arguments), split neutrals / muted greys / accents, measure OKLCH, APCA Lc and WCAG 2 against the background, score the 7 palette rules, and check text tokens on their own fills (rule 8)
@@ -56,6 +56,8 @@ export async function analyzeCommand(args: string[]): Promise<Record<string, unk
   );
   const bgRaw = p.str("bg");
   const bg = bgRaw === undefined ? undefined : parseOrFail(bgRaw, "--bg");
+  // --fields sai ⇒ báo ngay, trước khi quét cả cây thư mục.
+  assertFields(p.global.fields, COLOR_FIELDS);
   const ex = extract(p.positionals);
   const a = analyzePalette(ex.colors, bg, ex.tokens);
   const counts = (k: string): number => a.items.filter((i) => i.kind === k).length;
@@ -75,7 +77,10 @@ export async function analyzeCommand(args: string[]): Promise<Record<string, unk
   out["rules"] = rulesLine(a.rules);
   const fixable = a.issues.slice(0, p.global.full ? Infinity : 20);
   out["issues"] = a.issues.length ? fixable : "0 issues found";
-  if (fixable.length < a.issues.length) out["issues_count"] = `${fixable.length} of ${a.issues.length} total`;
+  if (fixable.length < a.issues.length) {
+    out["issues_count"] = `${fixable.length} of ${a.issues.length} total`;
+    help.push(`Run \`${commandLine("palette-axi analyze", args)} --full\` to list all ${a.issues.length} issues`);
+  }
   const list = renderList(
     { key: "palette", rows: colorRows(a), fields: DEFAULT_COLOR_FIELDS, available: COLOR_FIELDS, command: commandLine("palette-axi analyze", args), limit: 30 },
     p.global,

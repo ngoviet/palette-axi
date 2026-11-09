@@ -8,7 +8,7 @@ Output TOON gọn, có sẵn số đếm và dòng `help[]` gợi ý lệnh ti�
 
 ```bash
 palette-axi                                          # kiểm nhanh thư mục hiện tại
-palette-axi analyze src --bg "#0a1122"               # gom màu, chấm 7 nguyên tắc, issues[]
+palette-axi analyze src --bg "#0a1122"               # gom màu, chấm 8 quy tắc, issues[]
 palette-axi contrast "#8ea3c2" "#0a1122" --size 14   # WCAG + APCA + gợi ý màu cùng sắc đạt chuẩn
 palette-axi generate --seed 262 --mode both --format css > tokens.css
 palette-axi generate --preset neon-dark --format tailwind
@@ -17,7 +17,7 @@ palette-axi scale "#3b82f6" --steps 12 --mode dark
 
 Hex phải bọc nháy (`"#3b82f6"`) hoặc bỏ `#` (`3b82f6`): shell coi `#…` không nháy là chú thích.
 
-## 7 nguyên tắc
+## 7 nguyên tắc + kiểm cặp chữ–nền
 
 | # | Nguyên tắc | Mã issue |
 |---|---|---|
@@ -28,6 +28,10 @@ Hex phải bọc nháy (`"#3b82f6"`) hoặc bỏ `#` (`3b82f6`): shell coi `#…
 | 5 | Thang chroma giảm dần về hai đầu | `5-scale` |
 | 6 | Mỗi bậc một vai trò; mỗi sắc một nghĩa (success xanh lá, warn vàng/cam, error đỏ, info xanh dương) | `6-meaning` |
 | 7 | Kiểm bằng máy: APCA Lc 90/75/60/45/30/15, kèm WCAG 2 (4.5:1); kẹp sRGB | `7-contrast`, `7-gamut` |
+| 8 | Chữ trên đúng mặt nền của nó, ghép theo tên token trong cùng khối `{}`: `on-X`/`X-foreground` trên `X` (kể cả `-hover`/`-pressed`/`-active`), `foreground` trên `background`, `X-text` trên `X-subtle`/`-bg`/`-soft`/`-container`; mỗi cặp cần Lc 60 + 4.5:1 | `8-pairs` |
+
+`analyze --strict` thoát 1 (`ISSUES_FOUND`) khi có issue — dùng được trong CI. Quy tắc 8 chưa đọc token
+dạng kênh trần của shadcn cũ (`--primary: 222 47% 11%`) hay `var()`: các file đó báo `n/a`.
 
 Nguồn: Evil Martians (OKLCH), Ottosson (Oklab), Radix Colors, Tailwind v4, Material dark theme, APCA,
 Evil Martians Harmony. Preset `neon-dark` lấy từ theme Neon của lan-topo-card, đã sửa 3 màu yếu

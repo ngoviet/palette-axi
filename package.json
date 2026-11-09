@@ -1,6 +1,6 @@
 {
   "name": "palette-axi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Audit and generate UI color palettes in OKLCH: tinted neutrals, accents on one lightness band, APCA + WCAG contrast, sRGB gamut",
   "type": "module",
   "license": "MIT",
@@ -38,22 +38,22 @@
     "check": "tsc -p tsconfig.json && eslint . && vitest run",
     "skill:build": "tsup --config tsup.scripts.config.ts && node build/scripts/skill.js",
     "skill:check": "tsup --config tsup.scripts.config.ts && node build/scripts/skill.js --check",
-    "install:global": "tsup && node -e \"require('fs').mkdirSync('build/pack',{recursive:true})\" && npm pack --pack-destination build/pack && npm install -g build/pack/palette-axi-0.1.0.tgz"
+    "install:global": "tsup && node -e \"require('fs').mkdirSync('build/pack',{recursive:true})\" && npm pack --pack-destination build/pack && npm install -g build/pack/palette-axi-0.2.0.tgz"
   },
   "dependencies": {
-    "axi-sdk-js": "0.1.13",
+    "axi-sdk-js": "0.1.14",
     "colorjs.io": "^0.7.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "26.6.6",
     "eslint": "10.14.0",
-    "tsup": "8.5.1",
+    "tsup": "9.0.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "allowScripts": {
-    "esbuild@0.27.7": true
+    "esbuild@0.28.2": true
   }
 }
