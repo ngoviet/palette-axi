@@ -1,6 +1,6 @@
 # CLAUDE.md — palette-axi
 
-CLI TypeScript theo chuẩn AXI (axi-sdk-js 0.1.13), khuôn `D:\code\social-axi`. Tạo 26/10/2026 từ
+CLI TypeScript theo chuẩn AXI (axi-sdk-js 0.1.14), khuôn `D:\code\social-axi`. Tạo 26/10/2026 từ
 nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguyen-tac-tao-bang-mau-dep-va-skill-palette-theo-axi`).
 
 ## Cấu trúc
