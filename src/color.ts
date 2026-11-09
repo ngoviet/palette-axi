@@ -12,6 +12,8 @@ export interface Swatch {
   /** Hue độ; màu xám (C < 0.005) để 0 và `achromatic` = true. */
   h: number;
   achromatic: boolean;
+  /** Hue đo được kể cả khi C rất nhỏ (xám nhuốm nhẹ như #f4f6f8, C 0.003 H 248); NaN nếu không có. */
+  rawHue: number;
   alpha: number;
   /** Màu gốc có nằm trong sRGB không (hex luôn có; oklch()/lab() có thể không). */
   inGamut: boolean;
@@ -55,6 +57,7 @@ export function swatch(color: Color): Swatch {
     c: Number.isNaN(c) ? 0 : c,
     h: achromatic ? 0 : ((hRaw % 360) + 360) % 360,
     achromatic,
+    rawHue: Number.isNaN(hRaw) || !(c >= 0.0015) ? NaN : ((hRaw % 360) + 360) % 360,
     alpha: color.alpha === undefined || Number.isNaN(Number(color.alpha)) ? 1 : Number(color.alpha),
     inGamut: color.inGamut("srgb", { epsilon: 0.0001 }),
   };
@@ -74,9 +77,17 @@ export function fmtOklch(s: Pick<Swatch, "l" | "c" | "h">): string {
   return `${s.l.toFixed(3)} ${s.c.toFixed(3)} ${Math.round(s.h)}`;
 }
 
-/** "oklch(0.623 0.188 259.8)" — cho CSS. */
+/**
+ * "oklch(0.623 0.188 259.8)" — cho CSS, luôn nằm trong sRGB SAU khi làm tròn. Màu đã kẹp gamut nằm sát
+ * mép; làm tròn chroma lên (0.1936 → 0.194) đẩy nó ra ngoài ⇒ `analyze` chính CSS này báo 7-gamut.
+ * Vì vậy chroma làm tròn xuống, rồi giảm từng 0.001 tới khi vào gamut.
+ */
 export function cssOklch(s: Pick<Swatch, "l" | "c" | "h">): string {
-  return `oklch(${s.l.toFixed(3)} ${s.c.toFixed(3)} ${s.h.toFixed(1)})`;
+  const l = Number(s.l.toFixed(3));
+  const h = Number(s.h.toFixed(1));
+  let c = Math.floor(s.c * 1000 + 1e-9) / 1000;
+  while (c > 0 && !oklch(l, c, h).inGamut("srgb")) c = Math.round((c - 0.001) * 1000) / 1000;
+  return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)})`;
 }
 
 export function wcag(fg: Color, bg: Color): number {
@@ -114,7 +125,7 @@ export interface Solved {
 }
 
 /**
- * Tìm màu có |Lc| = `target` trên nền `bg`, giữ hue, L trong [lo, hi].
+ * Tìm màu có |Lc| = `target` (và tỉ lệ WCAG ≥ `wcag` nếu có) trên nền `bg`, giữ hue, L trong [lo, hi].
  * Chroma tại mỗi L = min(cMax, chroma lớn nhất trong gamut) ⇒ kết quả luôn là màu thật.
  * Tìm nhị phân trên L (|Lc| đơn điệu theo L ở phía xa nền).
  */
@@ -122,25 +133,30 @@ export function solveLc(
   bg: Color,
   h: number,
   target: number,
-  opts: { lo?: number; hi?: number; cMax?: number } = {},
+  opts: { lo?: number; hi?: number; cMax?: number; wcag?: number } = {},
 ): Solved {
   const bgL = swatch(bg).l;
   const dark = bgL < 0.5;
   const lo = opts.lo ?? (dark ? bgL : 0);
   const hi = opts.hi ?? (dark ? 1 : bgL);
   const cMax = opts.cMax ?? 0.2;
+  const minWcag = opts.wcag ?? 0;
   const at = (l: number): Color => oklch(l, Math.min(cMax, maxChroma(l, h)), h);
   const lcAt = (l: number): number => Math.abs(apca(at(l), bg));
+  // Đạt cả hai ngưỡng: APCA Lc và tỉ lệ WCAG 2 (so trên hex đã kẹp gamut, như khi in ra). Cả hai
+  // tăng đơn điệu khi L đi xa nền ⇒ vẫn tìm nhị phân được. Trên nền sáng Lc 60 chỉ ≈ 3.5:1, nên
+  // thiếu sàn WCAG thì màu "đạt" vẫn trượt AA.
+  const meets = (l: number): boolean => lcAt(l) >= target && (minWcag <= 0 || wcag(new Color(toHex(at(l))), bg) >= minWcag);
   // Phía xa nền (dark: L cao) cho |Lc| lớn.
   const far = dark ? hi : lo;
   const near = dark ? lo : hi;
-  if (lcAt(far) < target) return { color: at(far), lc: apca(at(far), bg), reached: false };
-  if (lcAt(near) >= target) return { color: at(near), lc: apca(at(near), bg), reached: lcAt(near) - target < 1 };
+  if (!meets(far)) return { color: at(far), lc: apca(at(far), bg), reached: false };
+  if (meets(near)) return { color: at(near), lc: apca(at(near), bg), reached: lcAt(near) - target < 1 };
   let a = near;
   let b = far;
   for (let i = 0; i < 30; i++) {
     const mid = (a + b) / 2;
-    if (lcAt(mid) >= target) b = mid;
+    if (meets(mid)) b = mid;
     else a = mid;
   }
   const color = at(b);

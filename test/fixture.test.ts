@@ -46,7 +46,9 @@ describe("analyze: lan-topo-card palette matches the reference measurements", ()
     expect(out).toContain("#ef4444,4-band,L 0.64 < 0.70; Lc -37");
     expect(out).toContain('#8ea3c2,7-contrast,"Lc -51 < 60 for content text; 7.32:1"');
     // lan-topo-card không có token on-X / X-foreground / X-text ⇒ 8-pairs n/a.
-    expect(field(out, "rules")).toBe("5/7 rules passed, failed: 4-band 7-contrast, n/a: 8-pairs");
+    // 5-scale n/a từ 0.4.0 (chủ repo duyệt 09/11/2026): "thang" trước đây đạt là gộp nhầm trung tính xanh
+    // (#0a1122, #142443, #8ea3c2) với màu nhấn xanh dương; findRamps nay chỉ xét màu nhấn / token tên bậc thang.
+    expect(field(out, "rules")).toBe("4/6 rules passed, failed: 4-band 7-contrast, n/a: 5-scale 8-pairs");
   });
 
   it("infers the same background without --bg", () => {

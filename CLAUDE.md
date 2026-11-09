@@ -35,6 +35,12 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 - Fixture `test/fixtures/fluent-blue-0.2.0.css` (vai trò màu thật của Fluent Blue, sáng + tối): 40 cặp, 17 trượt;
   số WCAG đối chiếu bằng công thức `contrast_ratio` của chính Fluent Blue.
 - `8-pairs` chưa đọc token dạng kênh trần của shadcn cũ (`--primary: 222 47% 11%`) hay `var()` ⇒ n/a ở các file đó.
+- 0.4.0 (09/11/2026, sửa theo đánh giá Apollo — báo cáo "Sửa lỗi palette-axi 0.3.1"): chữ phải đạt CẢ Lc lẫn WCAG
+  (`solveLc(..., { wcag })`, ngưỡng `PAIR` / `NONTEXT_WCAG` / `ACCENT_WCAG` trong `rules.ts`). Token tên chữ
+  (`BARE_TEXT`, `X-ink`, `X-text`) chấm như chữ dù rơi vào nhóm muted; chỉ token cùng khối `{}` với nền. Quy ước
+  ghép cặp CHỈ thêm `X-ink` — `X-fg`/`X-dim` và chữ trần trên `bg/surface` từng thử nhưng đổi số đo đối chiếu
+  (lan-topo-card, Fluent Blue 40/17) nên bỏ. `findRamps` không gộp trung tính ⇒ lan-topo-card `5-scale` n/a
+  (chủ repo duyệt). Test hồi quy: `test/regressions-0.3.1.test.ts`, `test/review-0.4.test.ts`.
 
 - README song ngữ theo **readme-axi** (`ngoviet/.github/readme-axi/readme_axi.py`, loại `tool`): sửa `README.md`
   thì sửa luôn `README.vi.md` cùng khung; kiểm bằng `python readme_axi.py check` và `drift`. Khối ủng hộ chỉ sinh

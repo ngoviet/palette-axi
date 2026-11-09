@@ -1,21 +1,22 @@
 import { choiceFlag, numFlag, parseCommandArgs } from "../args.js";
 import { apca, Color, cssOklch, fmtOklch, maxChroma, oklch, round, solveLc, swatch, toHex, wcag, type Swatch } from "../color.js";
 import { fail } from "../errors.js";
-import type { Found } from "../extract.js";
+import type { Found, TokenDef } from "../extract.js";
 import { PRESETS, type Preset, type PresetToken } from "../presets.js";
 import { analyzePalette, rulesLine, T, type Mode } from "../rules.js";
 import { VERSION } from "../version.js";
 import { assertFields, commandLine, renderList, type Row } from "../views.js";
 import { seedOf } from "./scale.js";
 
-export const GENERATE_HELP = `usage: palette-axi generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--lc <n>] [--format toon|css|tailwind|json]
+export const GENERATE_HELP = `usage: palette-axi generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--lc <n>] [--wcag <ratio>] [--format toon|css|tailwind|json]
        palette-axi generate --preset neon-dark|cockpit [--mode …] [--roles a,b] [--format …]
-description: Build a theme by the 7 rules: neutrals tinted with the seed hue, a not-black background with a corner glow, accents on one lightness band at equal APCA contrast with max in-gamut chroma, meaning-coded status colors. The result is re-scored with the analyze rules
-flags[6]:
+description: Build a theme by the rules: neutrals tinted with the seed hue, a not-black background with a corner glow, accents on one lightness band at equal APCA contrast with max in-gamut chroma, meaning-coded status colors, and on-primary for text on the primary fill. Text (dim, fg) and accents also meet a WCAG 2 floor (default 4.5:1), solved on the hardest surface they sit on. The result is re-scored with the analyze rules, text/fill pairs included
+flags[7]:
   --seed <hue|color>: hue angle (262) or a color whose hue is the primary ("#22d3ee")
   --mode dark|light|both: default dark with --seed; with --preset, default is every available mode (cockpit: both). both = light :root + dark under prefers-color-scheme / [data-theme=dark]
   --roles a,b: accents to build (default primary,ok,warn,bad,info). Named hues: red orange amber yellow lime green teal cyan sky blue indigo violet purple fuchsia pink; custom: brand=310
   --lc <n>: target |APCA Lc| of accents on bg (default 60), kept inside the band
+  --wcag <ratio>: WCAG 2 floor for dim, fg and accents (default 4.5 = AA text; 3 for icon-only accents; 0 = APCA only)
   --preset neon-dark|cockpit: a real theme with its weak colors fixed and listed in fixed[]. neon-dark = lan-topo-card neon (dark only; blue/red into the band, secondary text to Lc 60). cockpit = cockpit-tools light + dark (default both; warm paper bg tinted, status colors and muted text readable, dark hover brighter) with its principles[] and gradient/alpha vars in --format css
   --format toon|css|tailwind|json: css = custom properties, tailwind = v4 @theme block, json = tokens
 fields: token,hex,oklch,role,lc,wcag,css (neutrals default token,hex,oklch,role; accents token,hex,oklch,lc)
@@ -60,39 +61,54 @@ function measure(token: string, s: Swatch, role: string, bg: Color): Token {
   return { token, s, role, lc: apca(c, bg), wcag: wcag(c, bg) };
 }
 
-/** Trung tính (nguyên tắc 2, 3, 7): nền L 0.18 không đen, mặt nổi sáng hơn, chữ theo Lc mục tiêu. */
-function neutrals(h: number, mode: Mode): { bg: Color; list: Token[] } {
+/**
+ * Trung tính (nguyên tắc 2, 3, 7): nền L 0.18 không đen, mặt nổi sáng hơn, chữ theo Lc mục tiêu VÀ sàn
+ * WCAG. Chữ giải trên mặt nền khó nhất nó nằm lên: theme tối là `surface` (sáng hơn `bg`), theme sáng là `bg`
+ * (tối hơn `surface`) ⇒ `dim`/`fg` đạt trên cả hai.
+ */
+function neutrals(h: number, mode: Mode, minWcag: number): { bg: Color; list: Token[] } {
   const n = (l: number, c: number): Swatch => sw(oklch(l, c, h));
   if (mode === "dark") {
     const bgS = n(0.18, 0.035);
+    const surface = n(0.225, 0.04);
     const bg = new Color(bgS.hex);
-    const dim = sw(solveLc(bg, h, 62, { cMax: 0.05 }).color);
-    const fg = sw(solveLc(bg, h, 92, { cMax: 0.015 }).color);
+    const hard = new Color(surface.hex);
+    const dim = sw(solveLc(hard, h, 62, { cMax: 0.05, wcag: minWcag }).color);
+    const fg = sw(solveLc(hard, h, 92, { cMax: 0.015, wcag: Math.max(minWcag, 7) }).color);
     const raw: Array<[string, Swatch, string]> = [
       ["bg-edge", n(0.145, 0.02), "gradient edge"],
       ["bg", bgS, "app background"],
-      ["surface", n(0.225, 0.04), "raised panel (+0.045 L)"],
+      ["surface", surface, "raised panel (+0.045 L)"],
       ["glow", n(0.26, 0.055), "gradient center, raised 2 (+0.08 L)"],
       ["border", n(0.34, 0.05), "border, divider"],
-      ["dim", dim, "secondary text (Lc 60+)"],
+      ["dim", dim, `secondary text (Lc 60+${minWcag ? `, ${minWcag}:1` : ""})`],
       ["fg", fg, "primary text (Lc 90+)"],
     ];
     return { bg, list: raw.map(([t, s, r]) => measure(t, s, r, bg)) };
   }
   const bgS = n(0.975, 0.006);
   const bg = new Color(bgS.hex);
-  const dim = sw(solveLc(bg, h, 62, { cMax: 0.05 }).color);
-  const fg = sw(solveLc(bg, h, 92, { cMax: 0.025 }).color);
+  const dim = sw(solveLc(bg, h, 62, { cMax: 0.05, wcag: minWcag }).color);
+  const fg = sw(solveLc(bg, h, 92, { cMax: 0.025, wcag: Math.max(minWcag, 7) }).color);
   const raw: Array<[string, Swatch, string]> = [
     ["bg-edge", n(0.955, 0.01), "gradient edge"],
     ["bg", bgS, "app background"],
     ["surface", n(0.99, 0.008), "raised panel"],
     ["glow", n(0.985, 0.014), "gradient center"],
     ["border", n(0.88, 0.02), "border, divider"],
-    ["dim", dim, "secondary text (Lc 60+)"],
+    ["dim", dim, `secondary text (Lc 60+${minWcag ? `, ${minWcag}:1` : ""})`],
     ["fg", fg, "primary text (Lc 90+)"],
   ];
   return { bg, list: raw.map(([t, s, r]) => measure(t, s, r, bg)) };
+}
+
+/** Chữ đặt trên primary (nút, badge): trắng hoặc gần đen cùng sắc, bên nào tương phản hơn. Đo trên primary. */
+function onPrimary(primary: Token, h: number): Token {
+  const p = new Color(primary.s.hex);
+  const cands = [swatch(new Color("#ffffff")), sw(oklch(0.18, 0.02, h))];
+  const best = cands.reduce((a, b) => (Math.abs(apca(new Color(b.hex), p)) > Math.abs(apca(new Color(a.hex), p)) ? b : a));
+  const tok = measure("on-primary", best, "text on primary (lc, wcag vs primary)", p);
+  return tok;
 }
 
 function parseRoles(raw: string | undefined, seedHue: number): Array<{ token: string; h: number }> {
@@ -111,18 +127,25 @@ function parseRoles(raw: string | undefined, seedHue: number): Array<{ token: st
   });
 }
 
-/** Màu nhấn (nguyên tắc 4): cùng |Lc| trên nền, kẹp trong dải L, chroma lớn nhất trong gamut ≤ 0.20. */
-function accents(roles: Array<{ token: string; h: number }>, bg: Color, mode: Mode, target: number): Token[] {
+/**
+ * Màu nhấn (nguyên tắc 4): cùng |Lc| trên nền, kẹp trong dải L, chroma lớn nhất trong gamut ≤ 0.20, và
+ * đạt sàn WCAG (màu nhấn hay làm chữ, liên kết). Trên nền sáng Lc 60 chỉ ≈ 3.5:1 nên sàn kéo L xuống thêm.
+ */
+function accents(roles: Array<{ token: string; h: number }>, bg: Color, mode: Mode, target: number, minWcag: number): Token[] {
   const [lo, hi] = mode === "dark" ? T.darkBand : T.lightBand;
-  return roles.map(({ token, h }) => {
-    const s = sw(solveLc(bg, h, target, { lo, hi, cMax: 0.2 }).color);
-    return measure(token, s, ROLE_TEXT[token] ?? `hue ${Math.round(h)}`, bg);
-  });
+  const out: Token[] = [];
+  for (const { token, h } of roles) {
+    const s = sw(solveLc(bg, h, target, { lo, hi, cMax: 0.2, wcag: minWcag }).color);
+    const tok = measure(token, s, ROLE_TEXT[token] ?? `hue ${Math.round(h)}`, bg);
+    out.push(tok);
+    if (token === "primary") out.push(onPrimary(tok, h));
+  }
+  return out;
 }
 
-export function buildTheme(seedHue: number, mode: Mode, roles: Array<{ token: string; h: number }>, target: number): Theme {
-  const { bg, list } = neutrals(seedHue, mode);
-  return { mode, neutrals: list, accents: accents(roles, bg, mode, target), fixed: [] };
+export function buildTheme(seedHue: number, mode: Mode, roles: Array<{ token: string; h: number }>, target: number, minWcag = 4.5): Theme {
+  const { bg, list } = neutrals(seedHue, mode, minWcag);
+  return { mode, neutrals: list, accents: accents(roles, bg, mode, target, minWcag), fixed: [] };
 }
 
 export function presetOf(name: string): Preset {
@@ -134,7 +157,7 @@ export function presetOf(name: string): Preset {
 const presetModes = (p: Preset): Mode[] => (["light", "dark"] as const).filter((m) => p.modes[m]);
 
 /** Sửa một token theo `fix` (xem presets.ts); nền `bg` dùng chính nó làm nền đo. */
-function fixSwatch(t: PresetToken, orig: Swatch, bg: Color, mode: Mode): { s: Swatch; why: string } {
+function fixSwatch(t: PresetToken, orig: Swatch, bg: Color, mode: Mode, textBg: Color = bg): { s: Swatch; why: string } {
   const [lo, hi] = mode === "dark" ? T.darkBand : T.lightBand;
   const band = `L ${lo.toFixed(2)}–${hi.toFixed(2)}`;
   switch (t.fix) {
@@ -143,11 +166,15 @@ function fixSwatch(t: PresetToken, orig: Swatch, bg: Color, mode: Mode): { s: Sw
         const l = t.to ?? lo + 0.02;
         return { s: sw(oklch(l, Math.min(orig.c, maxChroma(l, orig.h)), orig.h)), why: `${orig.l < lo ? "below" : "moved inside"} band ${band}` };
       }
-      return { s: sw(solveLc(bg, orig.h, t.to ?? 60, { lo, hi, cMax: orig.c }).color), why: `above band ${band}, too faint on light bg` };
+      return { s: sw(solveLc(bg, orig.h, t.to ?? 60, { lo, hi, cMax: orig.c, wcag: 4.5 }).color), why: `above band ${band}, too faint on light bg (now Lc ${t.to ?? 60} + 4.5:1)` };
     case "text": {
+      // `textBg`: mặt nền khó nhất chữ nằm lên (bg hoặc surface) ⇒ đạt trên mọi mặt trang.
       const target = t.to ?? 62;
-      const weak = Math.abs(apca(new Color(orig.hex), bg)) < T.textLc;
-      return { s: sw(solveLc(bg, orig.h, target, { cMax: orig.c }).color), why: `${weak ? `text under Lc ${T.textLc}` : "text hierarchy"}, target Lc ${target}` };
+      const weak = Math.abs(apca(new Color(orig.hex), textBg)) < T.textLc || wcag(new Color(orig.hex), textBg) < 4.5;
+      return {
+        s: sw(solveLc(textBg, orig.h, target, { cMax: orig.c, wcag: 4.5 }).color),
+        why: `${weak ? `text under Lc ${T.textLc} + 4.5:1` : "text hierarchy"}, target Lc ${target} + 4.5:1`,
+      };
     }
     case "tint": {
       const h = orig.achromatic ? (t.to ?? 0) : orig.h;
@@ -172,9 +199,16 @@ export function buildPreset(name: string, mode: Mode, only?: string[]): Theme {
   const bgTok = pm.neutrals.find((t) => t.token === "bg")!;
   const bgOrig = swatch(new Color(bgTok.hex));
   const bg = new Color(fixSwatch(bgTok, bgOrig, new Color(bgOrig.hex), mode).s.hex);
+  // Mặt nền khó nhất cho chữ: theme tối là mặt sáng nhất trong bg/surface, theme sáng là mặt tối nhất.
+  const pages = [bg, ...pm.neutrals.filter((t) => t.token === "surface").map((t) => new Color(fixSwatch(t, swatch(new Color(t.hex)), bg, mode).s.hex))];
+  const textBg = pages.reduce((a, b) => {
+    const la = swatch(a).l;
+    const lb = swatch(b).l;
+    return (mode === "dark" ? lb > la : lb < la) ? b : a;
+  });
   const apply = (t: PresetToken): Token => {
     const orig = swatch(new Color(t.hex));
-    const { s, why } = fixSwatch(t, orig, bg, mode);
+    const { s, why } = fixSwatch(t, orig, bg, mode, textBg);
     const tok = measure(t.token, s, t.role, bg);
     if (t.fix) {
       const before = Math.round(apca(new Color(orig.hex), bg));
@@ -201,8 +235,10 @@ export function buildPreset(name: string, mode: Mode, only?: string[]): Theme {
 export function scoreTheme(t: Theme): string {
   const all = [...t.neutrals, ...t.accents];
   const found: Found[] = all.map((x) => ({ swatch: x.s, raw: x.s.hex, names: [x.token], where: x.token, count: 1 }));
+  // Token như trong một khối `:root {}` ⇒ quy tắc 8 ghép dim/fg trên bg/surface, on-primary trên primary.
+  const tokens: TokenDef[] = all.map((x) => ({ name: x.token, hex: x.s.hex, scope: "theme#0", where: x.token }));
   const bg = t.neutrals.find((x) => x.token === "bg")!;
-  const a = analyzePalette(found, new Color(bg.s.hex));
+  const a = analyzePalette(found, new Color(bg.s.hex), tokens);
   return rulesLine(a.rules) + (a.issues.length ? `; ${a.issues.map((i) => `${i.hex} ${i.rule}`).join(", ")}` : "");
 }
 
@@ -272,6 +308,7 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
     mode: { type: "string", hint: "--mode dark|light|both" },
     roles: { type: "string", hint: "--roles a,b" },
     lc: { type: "string", hint: "--lc <n>" },
+    wcag: { type: "string", hint: "--wcag <ratio>" },
     preset: { type: "string", hint: "--preset neon-dark" },
     format: { type: "string", hint: "--format toon|css|tailwind|json" },
   });
@@ -289,6 +326,7 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
   let themes: Theme[];
   let seedLine: string;
   let principles: string[] | undefined;
+  const warnings: string[] = [];
   if (presetName) {
     const preset = presetOf(presetName);
     const have = presetModes(preset);
@@ -299,7 +337,7 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
     if (missing.length) {
       fail(`preset ${presetName} has no ${missing.join(", ")} mode`, "VALIDATION_ERROR", [`Modes: ${have.join(", ")}; or use --seed <hue> --mode ${missing[0]} to build one`]);
     }
-    if (p.str("lc") !== undefined) fail("--lc does not apply to a preset (its colors are fixed)", "VALIDATION_ERROR");
+    if (p.str("lc") !== undefined || p.str("wcag") !== undefined) fail("--lc and --wcag do not apply to a preset (its colors are fixed)", "VALIDATION_ERROR");
     const only = p.str("roles")?.split(",").map((r) => r.trim()).filter(Boolean);
     themes = want.map((m) => buildPreset(presetName, m, only));
     seedLine = `preset ${presetName}: ${preset.source}`;
@@ -308,15 +346,30 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
     const mode = choiceFlag(p, "mode", ["dark", "light", "both"] as const, "dark");
     const seed = seedOf(seedRaw!);
     const target = numFlag(p, "lc", 60, 30, 100);
+    const minWcag = numFlag(p, "wcag", 4.5, 0, 21);
     const roles = parseRoles(p.str("roles"), seed.h);
     const modes: Mode[] = mode === "both" ? ["light", "dark"] : [mode];
-    themes = modes.map((m) => buildTheme(seed.h, m, roles, target));
-    seedLine = `${seed.label} ⇒ hue ${Math.round(seed.h)}, accents at |Lc| ${target}`;
+    themes = modes.map((m) => buildTheme(seed.h, m, roles, target, minWcag));
+    // Lc thực, không phải mục tiêu: dải L kẹp màu (tối: --lc 75 chỉ tới 64–71) và sàn WCAG đẩy màu lên.
+    const got = themes.flatMap((t) => t.accents.filter((a) => a.token !== "on-primary").map((a) => Math.round(Math.abs(a.lc))));
+    const lo = Math.min(...got);
+    const hi = Math.max(...got);
+    const notes = [lo < target ? "some held back by the lightness band" : "", hi > target ? `some raised to reach ${minWcag}:1` : ""].filter(Boolean);
+    seedLine =
+      `${seed.label} ⇒ hue ${Math.round(seed.h)}, accents target |Lc| ${target}${minWcag ? ` + ${minWcag}:1` : ""}, ` +
+      `got |Lc| ${lo === hi ? lo : `${lo}–${hi}`}${notes.length ? ` (${notes.join("; ")})` : ""}`;
+    if (target < T.textLc || minWcag < 4.5) {
+      warnings.push(
+        target < T.textLc
+          ? `--lc ${target} < ${T.textLc}: accents are for icons and large text only, not body or link text`
+          : `--wcag ${minWcag} < 4.5: accents and dim text may fail WCAG AA as text`,
+      );
+    }
   }
 
   const header = principles
     ? `/* palette-axi ${VERSION} · ${commandLine("generate", args)}\n * Principles of ${presetName}:\n${principles.map((x) => ` * - ${x}`).join("\n")}\n */`
-    : `/* palette-axi ${VERSION} · ${commandLine("generate", args)} */`;
+    : `/* palette-axi ${VERSION} · ${commandLine("generate", args)}${warnings.length ? `\n * WARNING: ${warnings.join("; ")}\n` : " "}*/`;
   if (format === "css") return renderCss(themes, header);
   if (format === "tailwind") return renderTailwind(themes, header);
   if (format === "json") return renderJson(themes);
@@ -333,6 +386,7 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
     return o;
   };
   const out: Record<string, unknown> = { seed: seedLine };
+  if (warnings.length) out["warning"] = warnings.join("; ");
   if (principles) out["principles"] = principles;
   if (themes.length === 1) Object.assign(out, { mode: themes[0]!.mode }, block(themes[0]!));
   else for (const t of themes) out[t.mode] = block(t);

@@ -20,9 +20,9 @@ export interface CommandSpec {
 /** NGUỒN DUY NHẤT cho --help, dispatch và skill/SKILL.md (npm run skill:build). */
 export const COMMANDS: Record<string, CommandSpec> = {
   home: { usage: "home", summary: "quick palette check of the current directory + next commands (same as no arguments)", help: HOME_HELP },
-  analyze: { usage: "analyze <file|dir|color…> [--bg c] [--strict]", summary: "collect colors from CSS/JS/HTML, measure OKLCH + APCA + WCAG vs the background, list issues per rule", help: ANALYZE_HELP, run: analyzeCommand },
-  contrast: { usage: "contrast <fg> <bg> [--size px] [--weight n]", summary: "WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes", help: CONTRAST_HELP, run: contrastCommand },
-  generate: { usage: "generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--preset neon-dark|cockpit] [--format toon|css|tailwind|json]", summary: "build a theme by the 7 rules (tinted neutrals, accents at equal contrast), re-scored by analyze", help: GENERATE_HELP, run: generateCommand },
+  analyze: { usage: "analyze <file|dir|color…> [--bg c] [--pair fg:bg] [--ignore rule] [--strict]", summary: "collect colors from CSS/JS/HTML, measure OKLCH + APCA + WCAG vs the background, list issues per rule", help: ANALYZE_HELP, run: analyzeCommand },
+  contrast: { usage: "contrast <fg> <bg> [--size px] [--weight n]", summary: "WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes both", help: CONTRAST_HELP, run: contrastCommand },
+  generate: { usage: "generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--lc n] [--wcag r] [--preset neon-dark|cockpit] [--format toon|css|tailwind|json]", summary: "build a theme by the palette rules (tinted neutrals, accents at equal contrast, text at Lc 60 + 4.5:1), re-scored by analyze", help: GENERATE_HELP, run: generateCommand },
   scale: { usage: "scale <color|hue> [--steps 11|12] [--mode light|dark] [--bg c] [--format toon|css]", summary: "one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step", help: SCALE_HELP, run: scaleCommand },
   update: { usage: "update [--check]", summary: "installed version + how to install the latest GitHub release (not on npm; no network call)", help: UPDATE_HELP, run: updateCommand },
 };

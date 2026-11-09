@@ -29,7 +29,7 @@ export async function homeView(args: string[], cwd = process.cwd()): Promise<Rec
   out["presets"] = Object.keys(PRESETS).join(", ");
   out["help"] = [
     a.items.length ? "Run `palette-axi analyze . --bg \"<your bg>\"` for every issue and color" : "Run `palette-axi analyze <file|dir>` on a stylesheet or a built bundle",
-    "Run `palette-axi generate --seed <hue|color> --mode dark` to build a theme by the 7 rules",
+    "Run `palette-axi generate --seed <hue|color> --mode dark` to build a theme by the palette rules",
     "Run `palette-axi contrast \"<fg>\" \"<bg>\"` for APCA + WCAG of one pair",
     "Run `palette-axi --help` for every command",
   ];
