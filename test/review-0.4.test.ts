@@ -156,3 +156,27 @@ describe("contrast and generate meet WCAG AA as well as APCA", () => {
     expect(run(["generate", "--preset", "cockpit", "--wcag", "3"]).code).toBe(2);
   });
 });
+
+describe("review of 0.4.0: --ignore, seed note, warnings", () => {
+  it("--ignore 4-band still scores the accent's contrast (#3b82f6 Lc −37 on #0a1122 < 45)", () => {
+    const r = run(["analyze", "#3b82f6", "--bg", "#0a1122", "--ignore", "4-band", "--strict"]);
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("#3b82f6 7-contrast: Lc -37");
+  });
+
+  it("dark --lc 45: accents above target sit on the band floor, not raised by WCAG", () => {
+    const seed = field(run(["generate", "--seed", "254", "--lc", "45"]).out, "seed")!;
+    expect(seed).toContain("kept above target by the lightness band");
+    expect(seed).not.toContain("raised to reach");
+  });
+
+  it("light: accents above Lc 60 were raised by the 4.5:1 floor", () => {
+    expect(field(run(["generate", "--seed", "254", "--mode", "light"]).out, "seed")).toContain("(some raised to reach 4.5:1)");
+  });
+
+  it("lowering both --lc and --wcag warns about each", () => {
+    const w = field(run(["generate", "--seed", "254", "--lc", "45", "--wcag", "3"]).out, "warning")!;
+    expect(w).toContain("--lc 45 < 60");
+    expect(w).toContain("--wcag 3 < 4.5");
+  });
+});

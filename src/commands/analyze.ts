@@ -23,7 +23,7 @@ rules[8]:
   6-meaning: tokens named ok/success/warn/error/info carry green/amber/red/blue hues
   7-contrast: text tokens by name (ink, fg, text, muted, dim, text-secondary…) not paired by rule 8 need Lc 60 + 4.5:1 on bg; focus/ring/input-border need 3:1 (WCAG 1.4.11); other neutrals used as text |Lc| ≥ 60; accents |Lc| ≥ 45 + 3:1
   7-gamut: every color inside sRGB
-  8-pairs: text tokens on their own fill, paired by name in the same {} block: on-X and X-foreground on X (+ -hover/-pressed/-active), foreground on background, X-text / X-ink / X-fg on X-subtle/-bg/-soft/-container, bare ink/fg/text/muted/text-secondary on bg/background/paper/surface; each needs Lc 60 + 4.5:1
+  8-pairs: text tokens on their own fill, paired by name in the same {} block: on-X and X-foreground on X (+ -hover/-pressed/-active), foreground on background, X-text / X-ink on X-subtle/-bg/-soft/-container; each needs Lc 60 + 4.5:1 (bare ink/fg/text/muted/text-secondary are scored by 7-contrast on bg)
 examples:
   palette-axi analyze src --bg "#0a1122"
   palette-axi analyze styles/base.css --pair ok-ink:ok-bg --ignore 2-tint --strict

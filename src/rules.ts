@@ -294,6 +294,7 @@ const isWhite = (s: Swatch): boolean => s.l >= 0.995 && s.c < 0.005;
 const scaleStep = /-(?:50|[1-9]00|950|[1-9]|1[0-2])$/;
 
 export function analyzePalette(found: Found[], bgOpt?: Color, tokens: TokenDef[] = [], opts: AnalyzeOptions = {}): Analysis {
+  const ignore = new Set(opts.ignore ?? []);
   const inferred = bgOpt ? undefined : inferBg(found);
   const bg = bgOpt ? swatch(bgOpt) : inferred!.bg;
   const bgColor = new Color(bg.hex);
@@ -416,7 +417,7 @@ export function analyzePalette(found: Found[], bgOpt?: Color, tokens: TokenDef[]
 
   // 7 — tương phản (APCA, báo kèm WCAG 2) và gamut.
   before = issues.length;
-  const flagged = new Set(issues.filter((x) => x.rule === "4-band").map((x) => x.hex));
+  const flagged = new Set(ignore.has("4-band") ? [] : issues.filter((x) => x.rule === "4-band").map((x) => x.hex));
   // Vai trò theo tên trước, nhóm màu sau: chữ xám nhạt (C < 0.04, L 0.4–0.85) rơi vào nhóm "muted" vốn
   // không được chấm ⇒ trước đây `--ink: #8b95a1` (2.64:1) lọt hẳn.
   const textNames = (i: Item): string[] => i.names.filter((n) => isTextName(words(n)) && !fills.has(words(n)));
@@ -485,7 +486,6 @@ export function analyzePalette(found: Found[], bgOpt?: Color, tokens: TokenDef[]
   mark("8-pairs", pairs.length > 0, before);
   if (pairs.length) summary["pairs"] = `${pairs.length} text/fill pairs by token name, ${pairs.filter(pairFails).length} below Lc ${PAIR.lc} + ${PAIR.wcag}:1`;
 
-  const ignore = new Set(opts.ignore ?? []);
   const kept = issues.filter((i) => !ignore.has(i.rule));
   const rules = RULES.map((rule) => ({ rule, status: ignore.has(rule) ? ("ignored" as const) : (status[rule] ?? "n/a") }));
   return { bg, bgSource: bgOpt ? "flag" : inferred!.source, mode, items: all, issues: kept, rules, summary, pairs, ...(domHue !== undefined ? { neutralHue: domHue } : {}) };

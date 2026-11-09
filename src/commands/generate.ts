@@ -351,20 +351,26 @@ export async function generateCommand(args: string[]): Promise<Record<string, un
     const modes: Mode[] = mode === "both" ? ["light", "dark"] : [mode];
     themes = modes.map((m) => buildTheme(seed.h, m, roles, target, minWcag));
     // Lc thực, không phải mục tiêu: dải L kẹp màu (tối: --lc 75 chỉ tới 64–71) và sàn WCAG đẩy màu lên.
+    // Trên mép dải phía nền thì Lc dư là do dải, không phải sàn WCAG (nghiệm APCA thuần cũng dừng ở đó).
+    const above = themes.flatMap((t) => {
+      const near = t.mode === "dark" ? T.darkBand[0] : T.lightBand[1];
+      return t.accents
+        .filter((a) => a.token !== "on-primary" && Math.round(Math.abs(a.lc)) > target)
+        .map((a) => (Math.abs(a.s.l - near) < 0.005 ? "band" : "wcag"));
+    });
     const got = themes.flatMap((t) => t.accents.filter((a) => a.token !== "on-primary").map((a) => Math.round(Math.abs(a.lc))));
     const lo = Math.min(...got);
     const hi = Math.max(...got);
-    const notes = [lo < target ? "some held back by the lightness band" : "", hi > target ? `some raised to reach ${minWcag}:1` : ""].filter(Boolean);
+    const notes = [
+      lo < target ? "some held back by the lightness band" : "",
+      above.includes("band") ? "some kept above target by the lightness band" : "",
+      minWcag > 0 && above.includes("wcag") ? `some raised to reach ${minWcag}:1` : "",
+    ].filter(Boolean);
     seedLine =
       `${seed.label} ⇒ hue ${Math.round(seed.h)}, accents target |Lc| ${target}${minWcag ? ` + ${minWcag}:1` : ""}, ` +
       `got |Lc| ${lo === hi ? lo : `${lo}–${hi}`}${notes.length ? ` (${notes.join("; ")})` : ""}`;
-    if (target < T.textLc || minWcag < 4.5) {
-      warnings.push(
-        target < T.textLc
-          ? `--lc ${target} < ${T.textLc}: accents are for icons and large text only, not body or link text`
-          : `--wcag ${minWcag} < 4.5: accents and dim text may fail WCAG AA as text`,
-      );
-    }
+    if (target < T.textLc) warnings.push(`--lc ${target} < ${T.textLc}: accents are for icons and large text only, not body or link text`);
+    if (minWcag < 4.5) warnings.push(`--wcag ${minWcag} < 4.5: accents and dim text may fail WCAG AA as text`);
   }
 
   const header = principles
