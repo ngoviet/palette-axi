@@ -117,3 +117,14 @@ describe("analyze: extraction", () => {
     expect(field(r.out, "colors")).toBe("3 (3 accent)");
   });
 });
+
+describe("update", () => {
+  it("replaces the SDK npm updater: no network, points at GitHub releases, exit 0", () => {
+    const { out, code } = run(["update", "--check"]);
+    expect(code).toBe(0);
+    expect(field(out, "installed")).toBe(VERSION);
+    expect(out).toContain("releases/download/v<version>/palette-axi-<version>.tgz");
+    expect(out).not.toContain("UPDATE_ERROR");
+    expect(run(["--help"]).out).not.toContain("built-in");
+  });
+});

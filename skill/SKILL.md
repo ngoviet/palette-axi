@@ -48,6 +48,7 @@ Run `palette-axi` with no arguments for a quick check of the current directory.
 | `palette-axi contrast <fg> <bg> [--size px] [--weight n]` | WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes |
 | `palette-axi generate --seed <hue\|color> [--mode dark\|light\|both] [--roles a,b] [--preset neon-dark\|cockpit] [--format toon\|css\|tailwind\|json]` | build a theme by the 7 rules (tinted neutrals, accents at equal contrast), re-scored by analyze |
 | `palette-axi scale <color\|hue> [--steps 11\|12] [--mode light\|dark] [--bg c] [--format toon\|css]` | one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step |
+| `palette-axi update [--check]` | installed version + how to install the latest GitHub release (not on npm; no network call) |
 
 Every command accepts `--fields a,b`, `--limit <n>`, `--full` and `--help`.
 

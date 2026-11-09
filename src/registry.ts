@@ -3,6 +3,7 @@ import { CONTRAST_HELP, contrastCommand } from "./commands/contrast.js";
 import { GENERATE_HELP, generateCommand } from "./commands/generate.js";
 import { HOME_HELP } from "./commands/home.js";
 import { SCALE_HELP, scaleCommand } from "./commands/scale.js";
+import { UPDATE_HELP, updateCommand } from "./commands/update.js";
 
 export const DESCRIPTION =
   "Audit and generate UI color palettes in OKLCH: tinted neutrals, accents on one lightness band, APCA + WCAG contrast, sRGB gamut";
@@ -23,6 +24,7 @@ export const COMMANDS: Record<string, CommandSpec> = {
   contrast: { usage: "contrast <fg> <bg> [--size px] [--weight n]", summary: "WCAG ratio, APCA Lc, pass/fail per use, nearest same-hue color that passes", help: CONTRAST_HELP, run: contrastCommand },
   generate: { usage: "generate --seed <hue|color> [--mode dark|light|both] [--roles a,b] [--preset neon-dark|cockpit] [--format toon|css|tailwind|json]", summary: "build a theme by the 7 rules (tinted neutrals, accents at equal contrast), re-scored by analyze", help: GENERATE_HELP, run: generateCommand },
   scale: { usage: "scale <color|hue> [--steps 11|12] [--mode light|dark] [--bg c] [--format toon|css]", summary: "one hue as a Tailwind 50–950 or Radix 1–12 ramp, chroma tapered at both ends, role per step", help: SCALE_HELP, run: scaleCommand },
+  update: { usage: "update [--check]", summary: "installed version + how to install the latest GitHub release (not on npm; no network call)", help: UPDATE_HELP, run: updateCommand },
 };
 
 export function topLevelHelp(): string {

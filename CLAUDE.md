@@ -36,10 +36,17 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
   số WCAG đối chiếu bằng công thức `contrast_ratio` của chính Fluent Blue.
 - `8-pairs` chưa đọc token dạng kênh trần của shadcn cũ (`--primary: 222 47% 11%`) hay `var()` ⇒ n/a ở các file đó.
 
+- README song ngữ theo **readme-axi** (`ngoviet/.github/readme-axi/readme_axi.py`, loại `tool`): sửa `README.md`
+  thì sửa luôn `README.vi.md` cùng khung; kiểm bằng `python readme_axi.py check` và `drift`. Khối ủng hộ chỉ sinh
+  bằng `readme_axi.py support --write`, không viết tay. Đổi version ⇒ sửa link cài `.tgz` trong cả hai README.
+- `update` là lệnh của palette-axi (`src/commands/update.ts`), thay lệnh `update` sẵn có của axi-sdk-js ≥ 0.1.14
+  (lệnh đó hỏi npm registry, luôn lỗi vì palette-axi chỉ phát hành qua GitHub Releases). Không gọi mạng.
+
 ## CI
 
-Woodpecker tự host (`.woodpecker/ci.yaml`) — repo riêng tư, không dùng GitHub Actions. Chỉ chạy khi repo đã
-Enable trong https://ci.bepmamnon.com.
+Repo public từ 09/11/2026. Kiểm mã: Woodpecker tự host (`.woodpecker/ci.yaml`), chỉ chạy khi repo đã Enable trong
+https://ci.bepmamnon.com. GitHub Actions chỉ có `.github/workflows/readme.yml` (gọi workflow readme-axi chung,
+miễn phí cho repo public).
 
 ## Bẫy đã gặp
 
