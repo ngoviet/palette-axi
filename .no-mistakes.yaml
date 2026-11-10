@@ -3,9 +3,9 @@
 # ⚠️ Các field ĐIỀU KHIỂN (commands, agent, no_ci, gates…) chỉ được đọc từ
 # **default branch** — nên file này phải nằm trên `main`.
 
-# CI chính là Woodpecker tự host (.woodpecker/ci.yaml), chỉ chạy khi repo đã Enable trong
-# https://ci.bepmamnon.com. Chưa Enable thì PR không có check nào ⇒ khai no_ci để bước CI
-# không chờ "0 check" tới hết hạn. Khi Woodpecker đã bật, check thật vẫn được tính.
+# CI là GitHub Actions (.github/workflows/ci.yml, miễn phí cho repo public). Woodpecker tự host
+# đã tắt 10/11/2026: repo public không chạy trên PC4 (chung máy prod).
+# no_ci giữ true để bước CI của pipeline không chờ; check thật xem trên PR/commit.
 no_ci: true
 
 # Lệnh nền chạy TRƯỚC agent test: cài sạch rồi typecheck + eslint + vitest (test chạy bin đã
