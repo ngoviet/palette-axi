@@ -50,9 +50,9 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 
 ## CI
 
-Repo public từ 09/11/2026. Kiểm mã: Woodpecker tự host (`.woodpecker/ci.yaml`), chỉ chạy khi repo đã Enable trong
-https://ci.bepmamnon.com. GitHub Actions chỉ có `.github/workflows/readme.yml` (gọi workflow readme-axi chung,
-miễn phí cho repo public).
+Repo public từ 09/11/2026. Kiểm mã: GitHub Actions `.github/workflows/ci.yml` (`npm run check` + `npm run skill:check`),
+còn `.github/workflows/readme.yml` gọi workflow readme-axi chung. Cả hai miễn phí cho repo public. Woodpecker tự host
+đã tắt 10/11/2026, đừng bật lại: PR từ fork lạ sẽ chạy trên PC4, chung máy prod.
 
 ## Bẫy đã gặp
 

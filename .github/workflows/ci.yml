@@ -1,0 +1,30 @@
+# Kiểm mã trên GitHub Actions (repo public: ubuntu-latest miễn phí).
+# Không bật Woodpecker tự host: PR từ fork lạ sẽ chạy trên PC4, chung máy với prod.
+#
+# Test không gọi mạng; bài đo trên bundle lan-topo-card thật tự bỏ qua vì CI không có D:\code\lan-topo-card.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      # typecheck + eslint + vitest
+      - run: npm run check
+      # skill/SKILL.md khớp registry lệnh
+      - run: npm run skill:check
