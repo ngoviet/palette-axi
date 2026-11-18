@@ -22,8 +22,12 @@ nghiên cứu theme lan-topo-card (kho kiến thức: `research-axi kb show nguy
 
 - Đổi lệnh/summary ⇒ `npm run skill:build` (test fail nếu `skill/SKILL.md` lệch).
 - Đổi version ⇒ sửa `package.json`, `src/version.ts` và tên `.tgz` trong script `install:global` (test kiểm cả ba).
-- Phụ thuộc (rà 09/11/2026, v0.2.0): giữ TypeScript 6.0 — `typescript-eslint` 8.72 chỉ nhận `<6.1`, chưa lên TS 7.
-  Còn 10 cảnh báo moderate `minimatch` qua eslint (chỉ devDeps, chờ eslint vá); đừng `npm audit fix --force` (hạ eslint về 9).
+- TypeScript (18/11/2026): cài song song theo hướng dẫn chính thức của TS 7.0 — `@typescript/native` =
+  `npm:typescript@7.x` cấp lệnh `tsc` (typecheck bằng trình biên dịch Go), còn `typescript` =
+  `npm:@typescript/typescript6` giữ API JS 6.0 cho `typescript-eslint` (≤ 8.73 chỉ nhận peer `<6.1`, TS 7.0 không có
+  API lập trình). Đừng đổi `typescript` thẳng sang 7.x: npm báo ERESOLVE và eslint hỏng. Bỏ alias khi
+  typescript-eslint nhận TS 7 (chờ API của TS 7.1, issue typescript-eslint #10940).
+- Phụ thuộc (rà 09/11/2026, v0.2.0): còn 10 cảnh báo moderate `minimatch` qua eslint (chỉ devDeps, chờ eslint vá); đừng `npm audit fix --force` (hạ eslint về 9).
 - `allowScripts` ghim đúng bản esbuild đang cài (`npm ls esbuild`); nâng tsup/vitest thì sửa theo.
 - Màu CSS Color 4 có `none` (`oklch(0.7 none 30)`): Color.js trả `null` ⇒ `tryParse` đổi thành 0; toạ độ là chuỗi
   (`rgb(a,b,c)` trong mã JS) vẫn bị loại.
