@@ -1,0 +1,60 @@
+# Phát hành khi đẩy tag vX.Y.Z: tag phải khớp phiên bản ở package.json và src/version.ts, đóng gói palette-axi-X.Y.Z.tgz kèm
+# .sha256, rồi tạo release đính hai tệp đó. README cài từ chính tệp .tgz này, nên thiếu tệp là lỗi, không tạo release trống.
+# Kiểm thử đã chạy ở ci.yml trên main nên không lặp lại ở đây. Ghi chú tự sinh từ commit và PR; muốn ghi chú tự viết thì sửa
+# release sau khi tạo (gh release edit).
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Tag khớp phiên bản ở hai tệp
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PKG="$(node -p "require('./package.json').version")"
+          SRC="$(sed -n 's/^export const VERSION = "\(.*\)";$/\1/p' src/version.ts)"
+          if [ "$TAG" != "$PKG" ]; then echo "Tag v$TAG khác package.json $PKG"; exit 1; fi
+          if [ "$TAG" != "$SRC" ]; then echo "Tag v$TAG khác src/version.ts $SRC"; exit 1; fi
+
+      # Repo này không có script prepare: phải build trước, không thì gói thiếu dist.
+      - name: Đóng gói
+        run: |
+          VER="${GITHUB_REF#refs/tags/v}"
+          npm ci --no-audit --no-fund
+          npm run build
+          npm pack
+          sha256sum -b "palette-axi-$VER.tgz" > "palette-axi-$VER.tgz.sha256"
+          sha256sum -c "palette-axi-$VER.tgz.sha256"
+
+      # Cài thử đúng tệp sắp đính, như lệnh cài trong README.
+      - name: Cài thử gói
+        run: |
+          VER="${GITHUB_REF#refs/tags/v}"
+          npm install --prefix "$RUNNER_TEMP/thu" --no-audit --no-fund "./palette-axi-$VER.tgz"
+          GOT="$("$RUNNER_TEMP/thu/node_modules/.bin/palette-axi" --version)"
+          if [ "$GOT" != "$VER" ]; then echo "Gói cài ra phiên bản $GOT, cần $VER"; exit 1; fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            palette-axi-*.tgz
+            palette-axi-*.tgz.sha256
